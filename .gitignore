@@ -1,0 +1,35 @@
+# ── Kubernetes ──
+kubeconfig
+*.kubeconfig
+.kube/
+
+# ── Secrets (nunca versionar!) ──
+*-secret-values.yaml
+*.secret
+.env
+.env.*
+
+# ── kind ──
+kind-kubeconfig
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+
+# ── IDE ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Python ──
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# ── Docker ──
+*.tar

@@ -1,0 +1,9 @@
+# Namespace dedicado para o ambiente fullstack
+# Isola os recursos deste lab dos demais
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fullstack
+  labels:
+    lab: "03"
+    projeto: escola

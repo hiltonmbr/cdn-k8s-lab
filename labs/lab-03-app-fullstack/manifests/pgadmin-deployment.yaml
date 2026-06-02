@@ -1,0 +1,53 @@
+# Deployment do pgAdmin — interface gráfica para PostgreSQL
+# Conecta ao PostgreSQL externo (fora do cluster)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgadmin
+  namespace: fullstack
+  labels:
+    app: pgadmin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pgadmin
+  template:
+    metadata:
+      labels:
+        app: pgadmin
+    spec:
+      containers:
+      - name: pgadmin
+        image: dpage/pgadmin4:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: PGADMIN_DEFAULT_EMAIL
+          value: "admin@lab.com"
+        - name: PGADMIN_DEFAULT_PASSWORD
+          value: "admin123"
+        - name: PGADMIN_CONFIG_SERVER_MODE
+          value: "False"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+# Service NodePort para o pgAdmin
+# Acessível via port-forward (não temos mais portas mapeadas no kind)
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgadmin
+  namespace: fullstack
+spec:
+  type: ClusterIP
+  selector:
+    app: pgadmin
+  ports:
+  - port: 80
+    targetPort: 80

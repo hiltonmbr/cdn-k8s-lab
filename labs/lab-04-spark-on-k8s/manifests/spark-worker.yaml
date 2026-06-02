@@ -1,0 +1,41 @@
+# Spark Workers — Deployment
+# Os Workers conectam ao Master e executam as tarefas dos jobs
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-worker
+  namespace: spark
+  labels:
+    app: spark-worker
+spec:
+  replicas: 2                    # 2 Workers iniciais (escalar conforme necessário)
+  selector:
+    matchLabels:
+      app: spark-worker
+  template:
+    metadata:
+      labels:
+        app: spark-worker
+    spec:
+      serviceAccountName: spark
+      containers:
+      - name: spark-worker
+        image: bitnami/spark:3.5
+        env:
+        - name: SPARK_MODE
+          value: "worker"
+        - name: SPARK_MASTER_URL
+          value: "spark://spark-master:7077"
+        - name: SPARK_WORKER_MEMORY
+          value: "512m"
+        - name: SPARK_WORKER_CORES
+          value: "1"
+        ports:
+        - containerPort: 8081   # Web UI do Worker
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"

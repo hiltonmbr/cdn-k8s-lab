@@ -1,0 +1,8 @@
+# Namespace para o ambiente Spark
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: spark
+  labels:
+    lab: "04"
+    projeto: bigdata

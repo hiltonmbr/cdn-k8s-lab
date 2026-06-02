@@ -1,0 +1,15 @@
+# Service NodePort para a API Escola
+# Acessível via http://localhost:30002
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-escola
+  namespace: fullstack
+spec:
+  type: NodePort
+  selector:
+    app: api-escola
+  ports:
+  - port: 80
+    targetPort: 8000
+    nodePort: 30002
