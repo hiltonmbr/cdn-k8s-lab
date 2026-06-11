@@ -3,7 +3,7 @@ kubeconfig
 *.kubeconfig
 .kube/
 
-# ── Secrets (nunca versionar!) ──
+# ── Secrets (never version!) ──
 *-secret-values.yaml
 *.secret
 .env
