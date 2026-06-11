@@ -1,35 +1,39 @@
-# API de Vendas — Flask para K8s Lab
+# Sales API — Flask for K8s Lab
 from flask import Flask, jsonify
 import os
 import socket
 
 app = Flask(__name__)
 
-# Versão da API (usado para demonstrar rolling updates)
+# API version (used to demonstrate rolling updates)
 VERSION = os.environ.get("APP_VERSION", "1.0")
+
 
 @app.route("/")
 def index():
     return jsonify({
-        "app": "API de Vendas",
+        "app": "Sales API",
         "version": VERSION,
-        "hostname": socket.gethostname(),  # Nome do Pod
-        "message": f"Olá do Pod {socket.gethostname()}! 🚀"
+        "hostname": socket.gethostname(),  # Pod name
+        "message": f"Hello from Pod {socket.gethostname()}! 🚀"
     })
+
 
 @app.route("/health")
 def health():
     return jsonify({"status": "healthy", "version": VERSION})
 
-@app.route("/vendas")
+
+@app.route("/sales")
 def vendas():
-    # Dados de exemplo
+    # Sample data
     dados = [
-        {"id": 1, "produto": "Notebook", "valor": 4500.00},
-        {"id": 2, "produto": "Monitor 27\"", "valor": 1800.00},
-        {"id": 3, "produto": "Teclado Mecânico", "valor": 350.00},
+        {"id": 1, "product": "Laptop", "price": 4500.00},
+        {"id": 2, "product": "27\" Monitor", "price": 1800.00},
+        {"id": 3, "product": "Mechanical Keyboard", "price": 350.00},
     ]
-    return jsonify({"vendas": dados, "total": sum(v["valor"] for v in dados)})
+    return jsonify({"sales": dados, "total": sum(v["price"] for v in dados)})
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))

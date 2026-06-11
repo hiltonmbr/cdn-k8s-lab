@@ -1,18 +1,18 @@
-# Dashboard Kubernetes — Manifests de apoio
+# Kubernetes Dashboard — Supporting Manifests
 #
-# O Dashboard oficial é instalado via URL remota (veja o README).
-# Este arquivo contém os recursos auxiliares necessários:
-# ServiceAccount + ClusterRoleBinding para acesso admin.
+# The official Dashboard is installed via remote URL (see README).
+# This file contains the necessary supporting resources:
+# ServiceAccount + ClusterRoleBinding for admin access.
 
-# ServiceAccount para acesso ao Dashboard
+# ServiceAccount for Dashboard access
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: admin-user
   namespace: kubernetes-dashboard
 ---
-# Permissão de administrador (apenas para ambiente de aprendizado!)
-# ⚠️ Em produção, use permissões mínimas (RBAC restrito)
+# Admin permission (learning environment only!)
+# ⚠️ In production, use minimal permissions (restricted RBAC)
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:

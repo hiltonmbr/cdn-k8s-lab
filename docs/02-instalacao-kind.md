@@ -1,41 +1,41 @@
-# 📖 02 — Instalação: kind, kubectl e Ferramentas
+# 📖 02 — Installation: kind, kubectl, and Tools
 
-> **Objetivo:** Instalar e configurar todas as ferramentas necessárias para rodar um cluster Kubernetes local no seu computador. Ao final, você terá um cluster K8s funcional com 3 nós.
-
----
-
-## 🧰 O que vamos instalar
-
-| Ferramenta | O que é | Por que precisamos |
-|---|---|---|
-| **[kind](https://kind.sigs.k8s.io/)** | Kubernetes IN Docker — cria clusters K8s usando contêineres Docker como nós | É a forma mais leve de rodar K8s localmente. Sem VMs! |
-| **[kubectl](https://kubernetes.io/docs/tasks/tools/)** | CLI oficial do Kubernetes | Para interagir com o cluster (criar, listar, deletar recursos) |
-| **[k9s](https://k9scli.io/)** | Interface TUI (Terminal User Interface) para K8s | Visualizar e gerenciar o cluster de forma interativa no terminal |
-
-### Por que kind?
-
-Existem várias formas de rodar K8s localmente. Escolhemos o kind por ser a mais adequada para aprendizado:
-
-| Ferramenta | Prós | Contras |
-|---|---|---|
-| **kind** ✅ | Leve, rápido, usa Docker que você já tem, multi-node fácil | Sem dashboard nativo |
-| minikube | Muitas features, addons prontos | Pesado, usa VM por padrão |
-| Docker Desktop K8s | Um clique para ativar | Single-node, limitado |
-| k3d | Leve, usa k3s | Menos documentação |
-
-> 💡 **kind usa Docker por baixo!** Cada nó do cluster K8s é um contêiner Docker. Você pode ver os nós com `docker ps`. Isso significa que **o único pré-requisito é ter Docker instalado** — que você já tem do Docker Lab.
+> **Objective:** Install and configure all the necessary tools to run a local Kubernetes cluster on your computer. By the end, you'll have a functional K8s cluster with 3 nodes.
 
 ---
 
-## 🍎 Instalação no macOS
+## 🧰 What We're Going to Install
+
+| Tool | What it is | Why we need it |
+|---|---|---|
+| **[kind](https://kind.sigs.k8s.io/)** | Kubernetes IN Docker — creates K8s clusters using Docker containers as nodes | The lightest way to run K8s locally. No VMs! |
+| **[kubectl](https://kubernetes.io/docs/tasks/tools/)** | Official Kubernetes CLI | To interact with the cluster (create, list, delete resources) |
+| **[k9s](https://k9scli.io/)** | TUI (Terminal User Interface) for K8s | Visually manage the cluster interactively in the terminal |
+
+### Why kind?
+
+There are several ways to run K8s locally. We chose kind because it's the most suitable for learning:
+
+| Tool | Pros | Cons |
+|---|---|---|
+| **kind** ✅ | Lightweight, fast, uses Docker you already have, easy multi-node | No native dashboard |
+| minikube | Many features, ready addons | Heavy, uses VM by default |
+| Docker Desktop K8s | One-click to enable | Single-node, limited |
+| k3d | Lightweight, uses k3s | Less documentation |
+
+> 💡 **kind uses Docker under the hood!** Each K8s cluster node is a Docker container. You can see the nodes with `docker ps`. This means **the only prerequisite is having Docker installed** — which you already have from the Docker Lab.
+
+---
+
+## 🍎 macOS Installation
 
 ### 1. kind
 
 ```bash
-# Via Homebrew (recomendado)
+# Via Homebrew (recommended)
 brew install kind
 
-# Verificar
+# Verify
 kind version
 # → kind v0.25.0 go1.23.x
 ```
@@ -46,61 +46,61 @@ kind version
 # Via Homebrew
 brew install kubectl
 
-# Verificar
+# Verify
 kubectl version --client
 # → Client Version: v1.31.x
 ```
 
-### 3. k9s (opcional, mas muito recomendado)
+### 3. k9s (optional, but highly recommended)
 
 ```bash
 # Via Homebrew
 brew install k9s
 
-# Verificar
+# Verify
 k9s version
 ```
 
 ---
 
-## 🐧 Instalação no Linux
+## 🐧 Linux Installation
 
 ### 1. kind
 
 ```bash
-# Download do binário
+# Download binary
 curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
 chmod +x ./kind
 sudo mv ./kind /usr/local/bin/kind
 
-# Verificar
+# Verify
 kind version
 ```
 
 ### 2. kubectl
 
 ```bash
-# Download do binário
+# Download binary
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 chmod +x kubectl
 sudo mv kubectl /usr/local/bin/kubectl
 
-# Verificar
+# Verify
 kubectl version --client
 ```
 
 ### 3. k9s
 
 ```bash
-# Via script de instalação
+# Via install script
 curl -sS https://webi.sh/k9s | sh
 
-# Ou download manual: https://github.com/derailed/k9s/releases
+# Or manual download: https://github.com/derailed/k9s/releases
 ```
 
 ---
 
-## 🪟 Instalação no Windows
+## 🪟 Windows Installation
 
 ### 1. kind
 
@@ -108,10 +108,10 @@ curl -sS https://webi.sh/k9s | sh
 # Via Chocolatey
 choco install kind
 
-# Ou via Scoop
+# Or via Scoop
 scoop install kind
 
-# Verificar
+# Verify
 kind version
 ```
 
@@ -121,7 +121,7 @@ kind version
 # Via Chocolatey
 choco install kubernetes-cli
 
-# Verificar
+# Verify
 kubectl version --client
 ```
 
@@ -135,40 +135,40 @@ choco install k9s
 scoop install k9s
 ```
 
-> ⚠️ **Windows:** Certifique-se de que o Docker Desktop está rodando com **WSL 2** habilitado. O kind depende do Docker Engine funcionando.
+> ⚠️ **Windows:** Make sure Docker Desktop is running with **WSL 2** enabled. kind depends on the Docker Engine working.
 
 ---
 
-## 🎯 Criando Seu Primeiro Cluster
+## 🎯 Creating Your First Cluster
 
-### Cluster simples (single-node)
+### Simple cluster (single-node)
 
-O cluster mais simples tem apenas um nó que faz tudo (Control Plane + Worker):
+The simplest cluster has only one node that does everything (Control Plane + Worker):
 
 ```bash
-# Criar cluster com nome padrão "kind"
+# Create cluster with default name "kind"
 kind create cluster
 
-# Verificar que o cluster foi criado
+# Verify the cluster was created
 kubectl cluster-info
 # → Kubernetes control plane is running at https://127.0.0.1:xxxxx
 
-# Listar nós
+# List nodes
 kubectl get nodes
 # → NAME                 STATUS   ROLES           AGE   VERSION
 # → kind-control-plane   Ready    control-plane   30s   v1.31.0
 ```
 
-Pronto! Você tem um cluster Kubernetes funcional. 🎉
+Done! You have a functional Kubernetes cluster. 🎉
 
 ```bash
-# Deletar quando terminar
+# Delete when done
 kind delete cluster
 ```
 
-### Cluster multi-node (recomendado para os Labs)
+### Multi-node cluster (recommended for the Labs)
 
-Para simular um ambiente mais realista, usamos a configuração `kind-config.yaml` deste repositório:
+To simulate a more realistic environment, we use the `kind-config.yaml` from this repository:
 
 ```yaml
 # kind-config.yaml — 1 Control Plane + 2 Workers
@@ -188,10 +188,10 @@ nodes:
 ```
 
 ```bash
-# Criar cluster multi-node
+# Create multi-node cluster
 kind create cluster --name k8s-lab --config kind-config.yaml
 
-# Verificar: agora há 3 nós!
+# Verify: now there are 3 nodes!
 kubectl get nodes
 # → NAME                    STATUS   ROLES           AGE   VERSION
 # → k8s-lab-control-plane   Ready    control-plane   45s   v1.31.0
@@ -199,12 +199,12 @@ kubectl get nodes
 # → k8s-lab-worker2         Ready    <none>          30s   v1.31.0
 ```
 
-### O que aconteceu por baixo?
+### What happened under the hood?
 
-O kind criou **3 contêineres Docker** — cada um simulando um nó do cluster:
+kind created **3 Docker containers** — each simulating a cluster node:
 
 ```bash
-# Veja os contêineres do kind
+# See kind containers
 docker ps
 # → CONTAINER ID   IMAGE                  NAMES
 # → abc123         kindest/node:v1.31.0   k8s-lab-control-plane
@@ -214,14 +214,15 @@ docker ps
 
 ```
 ┌───────────────────────────────────────────────────────┐
-│                   Seu Computador                       │
+│                    Your Computer                       │
 │                                                       │
 │  ┌─────────────────────────────────────────────────┐  │
 │  │              Docker Engine                       │  │
 │  │                                                  │  │
 │  │  ┌──────────────┐ ┌────────────┐ ┌────────────┐ │  │
-│  │  │  Contêiner   │ │ Contêiner  │ │ Contêiner  │ │  │
-│  │  │  Docker #1   │ │ Docker #2  │ │ Docker #3  │ │  │
+│  │  │  Docker      │ │  Docker    │ │  Docker    │ │  │
+│  │  │  Container   │ │  Container │ │  Container │ │  │
+│  │  │  #1          │ │  #2        │ │  #3        │ │  │
 │  │  │              │ │            │ │            │ │  │
 │  │  │ ┌──────────┐ │ │ ┌────────┐ │ │ ┌────────┐ │ │  │
 │  │  │ │Control   │ │ │ │Worker  │ │ │ │Worker  │ │ │  │
@@ -236,140 +237,140 @@ docker ps
 └───────────────────────────────────────────────────────┘
 ```
 
-> 💡 **Elegância do kind:** Contêineres Docker simulando nós K8s que por sua vez executam contêineres de aplicação. É "contêiner dentro de contêiner" — mas funciona perfeitamente para aprendizado!
+> 💡 **Elegance of kind:** Docker containers simulating K8s nodes that in turn run application containers. It's "container within a container" — but works perfectly for learning!
 
 ---
 
-## 🔧 Gerenciando Clusters kind
+## 🔧 Managing kind Clusters
 
 ```bash
-# Listar clusters existentes
+# List existing clusters
 kind get clusters
 # → k8s-lab
 
-# Ver informações do cluster ativo
+# View active cluster info
 kubectl cluster-info
 
-# Ver todos os nós com detalhes
+# View all nodes with details
 kubectl get nodes -o wide
 
-# Trocar entre clusters (se tiver mais de um)
+# Switch between clusters (if you have more than one)
 kubectl config get-contexts
 kubectl config use-context kind-k8s-lab
 
-# Deletar um cluster
+# Delete a cluster
 kind delete cluster --name k8s-lab
 
-# Deletar TODOS os clusters
+# Delete ALL clusters
 kind delete clusters --all
 ```
 
 ---
 
-## 🔧 Configurando kubectl: Contextos
+## 🔧 Configuring kubectl: Contexts
 
-O kubectl pode gerenciar múltiplos clusters. Cada cluster é um **contexto**:
+kubectl can manage multiple clusters. Each cluster is a **context**:
 
 ```bash
-# Ver o contexto atual (cluster ativo)
+# View current context (active cluster)
 kubectl config current-context
 # → kind-k8s-lab
 
-# Listar todos os contextos
+# List all contexts
 kubectl config get-contexts
 # → CURRENT   NAME           CLUSTER        AUTHINFO
 # → *         kind-k8s-lab   kind-k8s-lab   kind-k8s-lab
 
-# Trocar de contexto
+# Switch context
 kubectl config use-context kind-k8s-lab
 ```
 
-> ⚠️ **Cuidado em produção:** Sempre verifique o contexto antes de executar comandos! Rodar `kubectl delete` no cluster errado pode ser catastrófico. O comando `kubectl config current-context` é seu melhor amigo.
+> ⚠️ **Caution in production:** Always verify the context before running commands! Running `kubectl delete` on the wrong cluster can be catastrophic. The command `kubectl config current-context` is your best friend.
 
 ---
 
-## 🖥️ k9s: O Terminal Turbinado para K8s
+## 🖥️ k9s: The Turbo Terminal for K8s
 
-O **k9s** é uma interface de terminal interativa que torna a visualização e gerenciamento do cluster muito mais produtivo:
+**k9s** is an interactive terminal interface that makes cluster visualization and management much more productive:
 
 ```bash
-# Iniciar o k9s (conecta ao cluster ativo)
+# Start k9s (connects to the active cluster)
 k9s
 ```
 
-### Comandos principais do k9s
+### Main k9s Commands
 
-| Tecla | Ação |
+| Key | Action |
 |---|---|
-| `:pods` | Ir para a tela de Pods |
-| `:deploy` | Ir para Deployments |
-| `:svc` | Ir para Services |
-| `:nodes` | Ir para Nodes |
-| `:ns` | Ir para Namespaces |
-| `d` | Describe (detalhes do recurso selecionado) |
-| `l` | Logs do Pod selecionado |
-| `s` | Shell (exec -it) no Pod |
-| `Ctrl+D` | Deletar recurso selecionado |
-| `?` | Ajuda |
-| `Ctrl+C` | Sair |
+| `:pods` | Go to Pods screen |
+| `:deploy` | Go to Deployments |
+| `:svc` | Go to Services |
+| `:nodes` | Go to Nodes |
+| `:ns` | Go to Namespaces |
+| `d` | Describe (details of selected resource) |
+| `l` | Logs of selected Pod |
+| `s` | Shell (exec -it) into Pod |
+| `Ctrl+D` | Delete selected resource |
+| `?` | Help |
+| `Ctrl+C` | Exit |
 
-> 💡 **Dica:** O k9s é como um "htop para Kubernetes". Muito útil para monitorar Pods em tempo real durante os Labs.
+> 💡 **Tip:** k9s is like "htop for Kubernetes". Very useful for monitoring Pods in real time during the Labs.
 
 ---
 
-## ✅ Checklist de Verificação
+## ✅ Verification Checklist
 
-Execute estes comandos para confirmar que tudo está instalado corretamente:
+Run these commands to confirm everything is installed correctly:
 
 ```bash
-# 1. Docker está rodando
+# 1. Docker is running
 docker version
-# ✅ Deve mostrar Client e Server
+# ✅ Should show Client and Server
 
-# 2. kind está instalado
+# 2. kind is installed
 kind version
-# ✅ Deve mostrar versão (ex: v0.25.0)
+# ✅ Should show version (e.g. v0.25.0)
 
-# 3. kubectl está instalado
+# 3. kubectl is installed
 kubectl version --client
-# ✅ Deve mostrar versão do cliente
+# ✅ Should show client version
 
-# 4. Criar cluster de teste
+# 4. Create a test cluster
 kind create cluster --name teste
-# ✅ Deve criar sem erros
+# ✅ Should create without errors
 
-# 5. kubectl se conecta ao cluster
+# 5. kubectl connects to the cluster
 kubectl get nodes
-# ✅ Deve listar o nó "teste-control-plane"
+# ✅ Should list the "teste-control-plane" node
 
-# 6. (Opcional) k9s funciona
+# 6. (Optional) k9s works
 k9s
-# ✅ Deve abrir a interface (Ctrl+C para sair)
+# ✅ Should open the interface (Ctrl+C to exit)
 
-# 7. Limpar
+# 7. Clean up
 kind delete cluster --name teste
 ```
 
-Se todos os passos passaram, seu ambiente está pronto! 🎉
+If all steps passed, your environment is ready! 🎉
 
 ---
 
-## 📝 Resumo
+## 📝 Summary
 
-| Ferramenta | Comando de instalação (macOS) | Verificação |
+| Tool | Install command (macOS) | Verification |
 |---|---|---|
 | **kind** | `brew install kind` | `kind version` |
 | **kubectl** | `brew install kubectl` | `kubectl version --client` |
 | **k9s** | `brew install k9s` | `k9s version` |
 
-| Ação | Comando |
+| Action | Command |
 |---|---|
-| Criar cluster simples | `kind create cluster` |
-| Criar cluster multi-node | `kind create cluster --name lab --config kind-config.yaml` |
-| Listar clusters | `kind get clusters` |
-| Ver nós | `kubectl get nodes` |
-| Deletar cluster | `kind delete cluster --name lab` |
+| Create simple cluster | `kind create cluster` |
+| Create multi-node cluster | `kind create cluster --name lab --config kind-config.yaml` |
+| List clusters | `kind get clusters` |
+| View nodes | `kubectl get nodes` |
+| Delete cluster | `kind delete cluster --name lab` |
 
 ---
 
-**Próximo:** [03 — Pods e Containers](03-pods-e-containers.md) →
+**Next:** [03 — Pods and Containers](03-pods-e-containers.md) →

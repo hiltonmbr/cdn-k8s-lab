@@ -1,27 +1,27 @@
 # 📖 07 — kubectl Cheatsheet
 
-> **Referência rápida** de todos os comandos essenciais do `kubectl`, organizados por categoria. Mantenha esta página aberta enquanto trabalha nos Labs!
+> **Quick reference** of all essential `kubectl` commands, organized by category. Keep this page open while working on the Labs!
 
 ---
 
-## 🔧 Cluster e Contexto
+## 🔧 Cluster and Context
 
 ```bash
-# Informações do cluster
+# Cluster info
 kubectl cluster-info
 
-# Listar contextos (clusters) configurados
+# List configured contexts (clusters)
 kubectl config get-contexts
 
-# Ver contexto ativo
+# View active context
 kubectl config current-context
 
-# Trocar de contexto
+# Switch context
 kubectl config use-context kind-k8s-lab
 
-# Ver todos os nós do cluster
+# View all cluster nodes
 kubectl get nodes
-kubectl get nodes -o wide          # Com IPs e versão do kernel
+kubectl get nodes -o wide          # With IPs and kernel version
 ```
 
 ---
@@ -29,42 +29,42 @@ kubectl get nodes -o wide          # Com IPs e versão do kernel
 ## 🫛 Pods
 
 ```bash
-# ── Listar ──
-kubectl get pods                            # Namespace atual
-kubectl get pods -A                         # Todos os namespaces
-kubectl get pods -o wide                    # Com IPs e nós
-kubectl get pods -l app=nginx               # Filtrar por label
-kubectl get pods --watch                    # Monitorar em tempo real
-kubectl get pods --sort-by='.status.startTime'  # Ordenar por data
+# ── List ──
+kubectl get pods                            # Current namespace
+kubectl get pods -A                         # All namespaces
+kubectl get pods -o wide                    # With IPs and nodes
+kubectl get pods -l app=nginx               # Filter by label
+kubectl get pods --watch                    # Real-time monitoring
+kubectl get pods --sort-by='.status.startTime'  # Sort by date
 
-# ── Criar (imperativo — para testes rápidos) ──
+# ── Create (imperative — for quick tests) ──
 kubectl run nginx --image=nginx:1.27 --port=80
-kubectl run pg --image=postgres:16 --env="POSTGRES_PASSWORD=senha"
+kubectl run pg --image=postgres:16 --env="POSTGRES_PASSWORD=password"
 
-# ── Detalhes ──
-kubectl describe pod <nome>                 # Eventos, status, volumes
-kubectl get pod <nome> -o yaml              # YAML completo do recurso
+# ── Details ──
+kubectl describe pod <name>                 # Events, status, volumes
+kubectl get pod <name> -o yaml              # Full resource YAML
 
 # ── Logs ──
-kubectl logs <nome>                         # Logs do contêiner
-kubectl logs <nome> -f                      # Seguir logs (tail -f)
-kubectl logs <nome> --previous              # Logs do contêiner anterior (crash)
-kubectl logs <nome> -c <container>          # Logs de contêiner específico (multi-container)
-kubectl logs -l app=nginx --all-containers  # Logs de todos os Pods com label
+kubectl logs <name>                         # Container logs
+kubectl logs <name> -f                      # Follow logs (tail -f)
+kubectl logs <name> --previous              # Previous container logs (crash)
+kubectl logs <name> -c <container>          # Specific container logs (multi-container)
+kubectl logs -l app=nginx --all-containers  # Logs from all Pods with label
 
-# ── Executar comandos ──
-kubectl exec -it <nome> -- bash             # Shell interativo
-kubectl exec -it <nome> -- sh               # Se bash não existe (Alpine)
-kubectl exec <nome> -- cat /etc/hostname    # Comando único
+# ── Execute commands ──
+kubectl exec -it <name> -- bash             # Interactive shell
+kubectl exec -it <name> -- sh               # If bash doesn't exist (Alpine)
+kubectl exec <name> -- cat /etc/hostname    # Single command
 
 # ── Port-forward ──
-kubectl port-forward pod/<nome> 8080:80     # Acessar Pod localmente
-kubectl port-forward svc/<nome> 8080:80     # Acessar via Service
+kubectl port-forward pod/<name> 8080:80     # Access Pod locally
+kubectl port-forward svc/<name> 8080:80     # Access via Service
 
-# ── Deletar ──
-kubectl delete pod <nome>                   # Deletar Pod específico
-kubectl delete pods --all                   # ⚠️ Deletar todos os Pods do namespace
-kubectl delete pod <nome> --force --grace-period=0  # Forçar remoção imediata
+# ── Delete ──
+kubectl delete pod <name>                   # Delete specific Pod
+kubectl delete pods --all                   # ⚠️ Delete all Pods in namespace
+kubectl delete pod <name> --force --grace-period=0  # Force immediate removal
 ```
 
 ---
@@ -72,30 +72,30 @@ kubectl delete pod <nome> --force --grace-period=0  # Forçar remoção imediata
 ## 🚀 Deployments
 
 ```bash
-# ── Criar / Atualizar ──
+# ── Create / Update ──
 kubectl apply -f deployment.yaml
-kubectl create deployment nginx --image=nginx:1.27 --replicas=3  # Imperativo
+kubectl create deployment nginx --image=nginx:1.27 --replicas=3  # Imperative
 
-# ── Listar ──
+# ── List ──
 kubectl get deployments
-kubectl get deploy                          # Atalho
+kubectl get deploy                          # Shortcut
 
-# ── Escalar ──
-kubectl scale deployment <nome> --replicas=5
-kubectl autoscale deployment <nome> --min=2 --max=10 --cpu-percent=50
+# ── Scale ──
+kubectl scale deployment <name> --replicas=5
+kubectl autoscale deployment <name> --min=2 --max=10 --cpu-percent=50
 
-# ── Atualizar imagem ──
-kubectl set image deployment/<nome> container=imagem:nova-tag
-kubectl rollout restart deployment <nome>   # Reiniciar todos os Pods
+# ── Update image ──
+kubectl set image deployment/<name> container=image:new-tag
+kubectl rollout restart deployment <name>   # Restart all Pods
 
 # ── Rollout ──
-kubectl rollout status deployment <nome>    # Status da atualização
-kubectl rollout history deployment <nome>   # Histórico de revisões
-kubectl rollout undo deployment <nome>      # Rollback (versão anterior)
-kubectl rollout undo deployment <nome> --to-revision=2  # Rollback específico
+kubectl rollout status deployment <name>    # Update status
+kubectl rollout history deployment <name>   # Revision history
+kubectl rollout undo deployment <name>      # Rollback (previous version)
+kubectl rollout undo deployment <name> --to-revision=2  # Specific rollback
 
-# ── Deletar ──
-kubectl delete deployment <nome>
+# ── Delete ──
+kubectl delete deployment <name>
 ```
 
 ---
@@ -103,41 +103,41 @@ kubectl delete deployment <nome>
 ## 🌐 Services
 
 ```bash
-# ── Criar ──
+# ── Create ──
 kubectl apply -f service.yaml
-kubectl expose deployment <nome> --port=80 --target-port=8000 --type=NodePort
+kubectl expose deployment <name> --port=80 --target-port=8000 --type=NodePort
 
-# ── Listar ──
+# ── List ──
 kubectl get services
-kubectl get svc                             # Atalho
+kubectl get svc                             # Shortcut
 
-# ── Detalhes ──
-kubectl describe svc <nome>
+# ── Details ──
+kubectl describe svc <name>
 
-# ── Deletar ──
-kubectl delete svc <nome>
+# ── Delete ──
+kubectl delete svc <name>
 ```
 
 ---
 
-## 📋 ConfigMaps e Secrets
+## 📋 ConfigMaps and Secrets
 
 ```bash
 # ── ConfigMaps ──
-kubectl create configmap <nome> --from-literal=KEY=value
-kubectl create configmap <nome> --from-file=config.yaml
+kubectl create configmap <name> --from-literal=KEY=value
+kubectl create configmap <name> --from-file=config.yaml
 kubectl get configmaps
-kubectl describe configmap <nome>
-kubectl get configmap <nome> -o yaml        # Ver conteúdo
+kubectl describe configmap <name>
+kubectl get configmap <name> -o yaml        # View contents
 
 # ── Secrets ──
-kubectl create secret generic <nome> --from-literal=PASSWORD=senha123
+kubectl create secret generic <name> --from-literal=PASSWORD=senha123
 kubectl get secrets
-kubectl describe secret <nome>
-kubectl get secret <nome> -o yaml           # Ver conteúdo (Base64)
+kubectl describe secret <name>
+kubectl get secret <name> -o yaml           # View contents (Base64)
 
-# Decodificar Secret
-kubectl get secret <nome> -o jsonpath='{.data.PASSWORD}' | base64 -d
+# Decode Secret
+kubectl get secret <name> -o jsonpath='{.data.PASSWORD}' | base64 -d
 ```
 
 ---
@@ -147,8 +147,8 @@ kubectl get secret <nome> -o jsonpath='{.data.PASSWORD}' | base64 -d
 ```bash
 kubectl get pv                              # PersistentVolumes
 kubectl get pvc                             # PersistentVolumeClaims
-kubectl describe pvc <nome>                 # Detalhes e status de binding
-kubectl get storageclass                    # StorageClasses disponíveis
+kubectl describe pvc <name>                 # Details and binding status
+kubectl get storageclass                    # Available StorageClasses
 ```
 
 ---
@@ -156,77 +156,77 @@ kubectl get storageclass                    # StorageClasses disponíveis
 ## 📁 Namespaces
 
 ```bash
-# ── Listar ──
+# ── List ──
 kubectl get namespaces
-kubectl get ns                              # Atalho
+kubectl get ns                              # Shortcut
 
-# ── Criar ──
-kubectl create namespace meu-ns
+# ── Create ──
+kubectl create namespace my-ns
 
-# ── Usar ──
-kubectl get pods -n meu-ns                  # Listar Pods de um namespace
-kubectl apply -f arquivo.yaml -n meu-ns     # Aplicar em namespace específico
+# ── Use ──
+kubectl get pods -n my-ns                   # List Pods in a namespace
+kubectl apply -f file.yaml -n my-ns         # Apply in specific namespace
 
-# ── Mudar namespace padrão ──
-kubectl config set-context --current --namespace=meu-ns
+# ── Change default namespace ──
+kubectl config set-context --current --namespace=my-ns
 ```
 
 ---
 
-## 📄 Aplicar e Deletar Recursos
+## 📄 Apply and Delete Resources
 
 ```bash
-# ── Aplicar YAML ──
-kubectl apply -f arquivo.yaml               # Criar ou atualizar
-kubectl apply -f manifests/                 # Aplicar todos os YAMLs de um diretório
-kubectl apply -f https://url/recurso.yaml   # Aplicar de uma URL
+# ── Apply YAML ──
+kubectl apply -f file.yaml               # Create or update
+kubectl apply -f manifests/              # Apply all YAMLs from a directory
+kubectl apply -f https://url/resource.yaml   # Apply from a URL
 
-# ── Deletar ──
-kubectl delete -f arquivo.yaml              # Deletar recurso definido no YAML
-kubectl delete -f manifests/                # Deletar tudo do diretório
-kubectl delete all --all -n <namespace>     # ⚠️ Deletar TUDO em um namespace
+# ── Delete ──
+kubectl delete -f file.yaml              # Delete resource defined in YAML
+kubectl delete -f manifests/             # Delete everything from directory
+kubectl delete all --all -n <namespace>  # ⚠️ Delete EVERYTHING in a namespace
 
-# ── Dry-run (testar sem aplicar) ──
-kubectl apply -f arquivo.yaml --dry-run=client   # Validar localmente
-kubectl apply -f arquivo.yaml --dry-run=server   # Validar no servidor
+# ── Dry-run (test without applying) ──
+kubectl apply -f file.yaml --dry-run=client   # Validate locally
+kubectl apply -f file.yaml --dry-run=server   # Validate on server
 ```
 
 ---
 
-## 🔍 Debug e Troubleshooting
+## 🔍 Debug and Troubleshooting
 
 ```bash
-# ── Eventos do cluster ──
+# ── Cluster events ──
 kubectl get events --sort-by='.lastTimestamp'
-kubectl get events -A                       # Todos os namespaces
+kubectl get events -A                       # All namespaces
 
-# ── Investigar Pod com problema ──
-kubectl describe pod <nome>                 # Seção "Events" é a chave
-kubectl logs <nome>                         # Ver stdout/stderr
-kubectl logs <nome> --previous              # Logs do crash anterior
+# ── Investigate problematic Pod ──
+kubectl describe pod <name>                 # "Events" section is key
+kubectl logs <name>                         # View stdout/stderr
+kubectl logs <name> --previous              # Previous crash logs
 
-# ── Status rápido ──
-kubectl get all                             # Tudo no namespace atual
-kubectl get all -A                          # Tudo em todos os namespaces
+# ── Quick status ──
+kubectl get all                             # Everything in current namespace
+kubectl get all -A                          # Everything in all namespaces
 
-# ── Recursos do nó ──
-kubectl top nodes                           # CPU e memória dos nós
-kubectl top pods                            # CPU e memória dos Pods
-# (requer Metrics Server instalado)
+# ── Node resources ──
+kubectl top nodes                           # Node CPU and memory
+kubectl top pods                            # Pod CPU and memory
+# (requires Metrics Server installed)
 
-# ── Testar conectividade de dentro do cluster ──
+# ── Test connectivity from inside the cluster ──
 kubectl run debug --image=busybox -it --rm -- wget -qO- http://api-vendas:80
 kubectl run debug --image=busybox -it --rm -- nslookup api-vendas
 ```
 
 ---
 
-## ⌨️ Aliases Úteis
+## ⌨️ Useful Aliases
 
-Adicione ao seu `~/.bashrc` ou `~/.zshrc` para produtividade:
+Add to your `~/.bashrc` or `~/.zshrc` for productivity:
 
 ```bash
-# Atalhos para kubectl
+# kubectl shortcuts
 alias k='kubectl'
 alias kgp='kubectl get pods'
 alias kgs='kubectl get svc'
@@ -240,33 +240,33 @@ alias klf='kubectl logs -f'
 alias kei='kubectl exec -it'
 alias kns='kubectl config set-context --current --namespace'
 
-# Exemplo de uso:
+# Usage example:
 # kgp           → kubectl get pods
 # kaf app.yaml  → kubectl apply -f app.yaml
-# klf meu-pod   → kubectl logs -f meu-pod
-# kns prod      → trocar para namespace "prod"
+# klf my-pod    → kubectl logs -f my-pod
+# kns prod      → switch to namespace "prod"
 ```
 
 ---
 
-## 📝 Gerar YAMLs Automaticamente
+## 📝 Generate YAMLs Automatically
 
 ```bash
-# Gerar YAML de Pod sem criar
+# Generate Pod YAML without creating
 kubectl run nginx --image=nginx:1.27 --port=80 \
   --dry-run=client -o yaml > pod.yaml
 
-# Gerar YAML de Deployment sem criar
+# Generate Deployment YAML without creating
 kubectl create deployment nginx --image=nginx:1.27 --replicas=3 \
   --dry-run=client -o yaml > deployment.yaml
 
-# Gerar YAML de Service sem criar
+# Generate Service YAML without creating
 kubectl expose deployment nginx --port=80 --type=NodePort \
   --dry-run=client -o yaml > service.yaml
 ```
 
-> 💡 **Dica:** `--dry-run=client -o yaml` é o seu melhor amigo para criar templates YAML rapidamente sem decorar a estrutura completa.
+> 💡 **Tip:** `--dry-run=client -o yaml` is your best friend for quickly creating YAML templates without memorizing the full structure.
 
 ---
 
-**← Voltar ao** [README.md](../README.md)
+**← Back to** [README.md](../README.md)

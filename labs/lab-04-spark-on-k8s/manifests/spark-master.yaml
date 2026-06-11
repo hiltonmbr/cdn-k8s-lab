@@ -1,5 +1,5 @@
 # Spark Master — Deployment + Service
-# O Master coordena a execução de jobs e gerencia os Workers
+# The Master coordinates job execution and manages Workers
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,8 +27,8 @@ spec:
         - name: SPARK_MASTER_HOST
           value: "spark-master"
         ports:
-        - containerPort: 7077   # Porta do Master (comunicação com Workers)
-        - containerPort: 8080   # Web UI do Spark Master
+        - containerPort: 7077   # Master port (communication with Workers)
+        - containerPort: 8080   # Spark Master Web UI
         resources:
           requests:
             memory: "512Mi"
@@ -37,8 +37,8 @@ spec:
             memory: "1Gi"
             cpu: "500m"
 ---
-# Service para o Spark Master
-# Os Workers se conectam ao Master via este Service
+# Spark Master Service
+# Workers connect to the Master via this Service
 apiVersion: v1
 kind: Service
 metadata:

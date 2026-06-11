@@ -1,63 +1,63 @@
-# 🧪 Lab 04 — Spark on K8s: Big Data no Cluster
+# 🧪 Lab 04 — Spark on K8s: Big Data on the Cluster
 
-> **Objetivo:** Executar Apache Spark dentro do cluster Kubernetes — deploy de Spark Master + Workers, submeter jobs de processamento e observar a escalabilidade. Este é o link direto entre K8s e o mundo de Big Data.
+> **Objective:** Run Apache Spark inside the Kubernetes cluster — deploy Spark Master + Workers, submit processing jobs, and observe scalability. This is the direct link between K8s and the Big Data world.
 
-> **Pré-requisito:** Cluster `k8s-lab` rodando (Lab 01). Recomendado 8 GB de RAM livre.
+> **Prerequisite:** `k8s-lab` cluster running (Lab 01). 8 GB free RAM recommended.
 
-> **Tempo estimado:** 35 minutos
-
----
-
-## 📋 O que você vai praticar
-
-- [x] Criar namespace isolado para o Spark
-- [x] Configurar RBAC (permissões) para o Spark
-- [x] Fazer deploy do Spark Master e Workers no K8s
-- [x] Acessar o Web UI do Spark Master
-- [x] Submeter um job PySpark (WordCount)
-- [x] Escalar Workers e observar o impacto
-- [x] Monitorar Pods com kubectl
+> **Estimated time:** 35 minutes
 
 ---
 
-## 🏗️ Arquitetura do Lab
+## 📋 What you will practice
+
+- [x] Create an isolated namespace for Spark
+- [x] Configure RBAC (permissions) for Spark
+- [x] Deploy Spark Master and Workers on K8s
+- [x] Access the Spark Master Web UI
+- [x] Submit a PySpark job (WordCount)
+- [x] Scale Workers and observe the impact
+- [x] Monitor Pods with kubectl
+
+---
+
+## 🏗️ Lab Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  Cluster K8s (kind) — Namespace: spark                       │
+│  K8s Cluster (kind) — Namespace: spark                       │
 │                                                              │
 │  ┌────────────────────┐                                      │
-│  │   Spark Master     │  ← Coordena jobs e Workers           │
+│  │   Spark Master     │  ← Coordinates jobs and Workers       │
 │  │   (Pod)            │                                      │
-│  │   Porta: 7077      │  ← Comunicação com Workers           │
-│  │   Web UI: 8080     │  ← Dashboard do Spark                │
+│  │   Port: 7077       │  ← Communication with Workers         │
+│  │   Web UI: 8080     │  ← Spark Dashboard                   │
 │  └────────┬───────────┘                                      │
 │           │                                                  │
 │     ┌─────┴──────┐                                           │
 │     │            │                                           │
 │  ┌──▼──────┐  ┌──▼──────┐                                   │
-│  │ Worker  │  │ Worker  │  ← Executam as tarefas dos jobs    │
+│  │ Worker  │  │ Worker  │  ← Execute job tasks                │
 │  │  #1     │  │  #2     │                                    │
-│  │ 512m    │  │ 512m    │  ← Memória alocada                 │
-│  │ 1 core  │  │ 1 core  │  ← CPU alocada                    │
+│  │ 512m    │  │ 512m    │  ← Allocated memory                 │
+│  │ 1 core  │  │ 1 core  │  ← Allocated CPU                   │
 │  └─────────┘  └─────────┘                                    │
 │                                                              │
-│  Escalável: kubectl scale deployment spark-worker --replicas=4│
+│  Scalable: kubectl scale deployment spark-worker --replicas=4 │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🔬 Exercício 1: Preparar o Ambiente
+## 🔬 Exercise 1: Prepare the Environment
 
-### Passo 1 — Criar o Namespace
+### Step 1 — Create the Namespace
 
 ```bash
 kubectl apply -f labs/lab-04-spark-on-k8s/manifests/spark-namespace.yaml
 # → namespace/spark created
 ```
 
-### Passo 2 — Configurar RBAC
+### Step 2 — Configure RBAC
 
 ```bash
 kubectl apply -f labs/lab-04-spark-on-k8s/manifests/spark-rbac.yaml
@@ -66,13 +66,13 @@ kubectl apply -f labs/lab-04-spark-on-k8s/manifests/spark-rbac.yaml
 # → rolebinding.rbac.authorization.k8s.io/spark-role-binding created
 ```
 
-> 💡 **RBAC (Role-Based Access Control)** define quem pode fazer o quê no cluster. O Spark precisa de permissão para criar e gerenciar Pods de Executor dinamicamente.
+> 💡 **RBAC (Role-Based Access Control)** defines who can do what in the cluster. Spark needs permission to create and manage Executor Pods dynamically.
 
 ---
 
-## 🔬 Exercício 2: Deploy do Spark Master
+## 🔬 Exercise 2: Deploy Spark Master
 
-### Passo 1 — Criar o Master
+### Step 1 — Create the Master
 
 ```bash
 kubectl apply -f labs/lab-04-spark-on-k8s/manifests/spark-master.yaml
@@ -80,7 +80,7 @@ kubectl apply -f labs/lab-04-spark-on-k8s/manifests/spark-master.yaml
 # → service/spark-master created
 ```
 
-### Passo 2 — Verificar
+### Step 2 — Verify
 
 ```bash
 kubectl get pods -n spark
@@ -88,34 +88,34 @@ kubectl get pods -n spark
 # → spark-master-xxx-abc12          1/1     Running   0          20s
 ```
 
-### Passo 3 — Acessar o Web UI do Spark
+### Step 3 — Access the Spark Web UI
 
 ```bash
 kubectl port-forward svc/spark-master -n spark 4040:8080
 # → Forwarding from 127.0.0.1:4040 -> 8080
 ```
 
-Abra: **http://localhost:4040** — Spark Master UI! 🎉
+Open: **http://localhost:4040** — Spark Master UI! 🎉
 
-Você verá:
-- **Workers:** 0 (nenhum ainda)
-- **Applications:** Nenhuma em execução
+You will see:
+- **Workers:** 0 (none yet)
+- **Applications:** None running
 - **Status:** ALIVE
 
-> Mantenha este port-forward rodando em um terminal separado.
+> Keep this port-forward running in a separate terminal.
 
 ---
 
-## 🔬 Exercício 3: Deploy dos Workers
+## 🔬 Exercise 3: Deploy Workers
 
-### Passo 1 — Criar os Workers
+### Step 1 — Create the Workers
 
 ```bash
 kubectl apply -f labs/lab-04-spark-on-k8s/manifests/spark-worker.yaml
 # → deployment.apps/spark-worker created
 ```
 
-### Passo 2 — Verificar
+### Step 2 — Verify
 
 ```bash
 kubectl get pods -n spark
@@ -125,38 +125,38 @@ kubectl get pods -n spark
 # → spark-worker-xxx-ghi56          1/1     Running   0          10s
 ```
 
-### Passo 3 — Verificar no Web UI
+### Step 3 — Verify in the Web UI
 
-Recarregue **http://localhost:4040**:
-- **Workers:** 2 ← Os Workers se registraram no Master!
+Reload **http://localhost:4040**:
+- **Workers:** 2 ← Workers registered with the Master!
 - **Cores in use:** 2
 - **Memory in use:** 1.0 GiB
 
-### Passo 4 — Ver a distribuição nos nós
+### Step 4 — See the distribution across nodes
 
 ```bash
 kubectl get pods -n spark -o wide
 # → NAME              NODE
 # → spark-master-...  k8s-lab-worker
-# → spark-worker-...  k8s-lab-worker2  ← Distribuídos pelo Scheduler!
+# → spark-worker-...  k8s-lab-worker2  ← Distributed by the Scheduler!
 # → spark-worker-...  k8s-lab-worker
 ```
 
 ---
 
-## 🔬 Exercício 4: Submeter um Job PySpark
+## 🔬 Exercise 4: Submit a PySpark Job
 
-### Passo 1 — Copiar o job para dentro do Master
+### Step 1 — Copy the job into the Master
 
 ```bash
-# Pegar o nome do Pod do Master
+# Get the Master Pod name
 MASTER_POD=$(kubectl get pods -n spark -l app=spark-master -o jsonpath='{.items[0].metadata.name}')
 
-# Copiar o script wordcount.py para dentro do Pod
+# Copy the wordcount.py script into the Pod
 kubectl cp labs/lab-04-spark-on-k8s/jobs/wordcount.py spark/$MASTER_POD:/tmp/wordcount.py
 ```
 
-### Passo 2 — Submeter o job via spark-submit
+### Step 2 — Submit the job via spark-submit
 
 ```bash
 kubectl exec -it $MASTER_POD -n spark -- \
@@ -165,19 +165,19 @@ kubectl exec -it $MASTER_POD -n spark -- \
     /tmp/wordcount.py
 ```
 
-### Passo 3 — Observar a execução
+### Step 3 — Observe the execution
 
-A saída mostrará o processamento do WordCount:
+The output will show the WordCount processing:
 
 ```
 ============================================================
 🚀 WordCount — Spark on Kubernetes
 ============================================================
 
-📊 Top 15 palavras mais frequentes:
+📊 Top 15 most frequent words:
 ----------------------------------------
 +-------------+-----+
-|palavra      |count|
+|word         |count|
 +-------------+-----+
 |kubernetes   |6    |
 |de           |6    |
@@ -189,35 +189,35 @@ A saída mostrará o processamento do WordCount:
 |...          |...  |
 +-------------+-----+
 
-📈 Total de palavras: 73
-📈 Palavras únicas: 38
+📈 Total words: 73
+📈 Unique words: 38
 ============================================================
 ```
 
-> 🧠 **O que aconteceu?** O Spark Driver rodou dentro do Pod do Master, distribuiu tarefas para os 2 Workers, processou os dados em paralelo e agregou os resultados. Tudo dentro do Kubernetes!
+> 🧠 **What happened?** The Spark Driver ran inside the Master Pod, distributed tasks to the 2 Workers, processed data in parallel, and aggregated results. All inside Kubernetes!
 
 ---
 
-## 🔬 Exercício 5: Escalar Workers
+## 🔬 Exercise 5: Scale Workers
 
-### Passo 1 — Escalar para 4 Workers
+### Step 1 — Scale to 4 Workers
 
 ```bash
 kubectl scale deployment spark-worker --replicas=4 -n spark
 
-# Verificar
+# Verify
 kubectl get pods -n spark
-# → 4 Workers rodando!
+# → 4 Workers running!
 ```
 
-### Passo 2 — Verificar no Web UI
+### Step 2 — Verify in the Web UI
 
-Recarregue http://localhost:4040:
-- **Workers:** 4 ← Escalou!
+Reload http://localhost:4040:
+- **Workers:** 4 ← Scaled!
 - **Cores:** 4
 - **Memory:** 2.0 GiB
 
-### Passo 3 — Submeter o job novamente e comparar
+### Step 3 — Submit the job again and compare
 
 ```bash
 kubectl exec -it $MASTER_POD -n spark -- \
@@ -226,80 +226,80 @@ kubectl exec -it $MASTER_POD -n spark -- \
     /tmp/wordcount.py
 ```
 
-### Passo 4 — Reduzir Workers
+### Step 4 — Reduce Workers
 
 ```bash
 kubectl scale deployment spark-worker --replicas=1 -n spark
 
-# Verificar: Pods excedentes terminando
+# Verify: excess Pods terminating
 kubectl get pods -n spark --watch
 ```
 
-> 💡 **Este é o poder do Spark on K8s!** Em ambientes reais, o Horizontal Pod Autoscaler (HPA) escalaria automaticamente os Workers com base na carga de trabalho. Sem provisionamento manual.
+> 💡 **This is the power of Spark on K8s!** In real environments, the Horizontal Pod Autoscaler (HPA) would automatically scale Workers based on workload. No manual provisioning.
 
 ---
 
-## 🔬 Exercício 6: Monitorar com kubectl
+## 🔬 Exercise 6: Monitor with kubectl
 
-### Ver logs em tempo real
+### View logs in real time
 
 ```bash
-# Logs do Master
+# Master logs
 kubectl logs -f $(kubectl get pods -n spark -l app=spark-master -o jsonpath='{.items[0].metadata.name}') -n spark
 
-# Logs de um Worker
+# Worker logs
 kubectl logs -f $(kubectl get pods -n spark -l app=spark-worker -o jsonpath='{.items[0].metadata.name}') -n spark
 ```
 
-### Ver uso de recursos
+### View resource usage
 
 ```bash
-# Detalhes de um Pod (eventos, recursos)
+# Pod details (events, resources)
 kubectl describe pod $MASTER_POD -n spark
 
-# Ver todos os recursos do namespace spark
+# View all resources in the spark namespace
 kubectl get all -n spark
 ```
 
 ---
 
-## 🧹 Limpeza
+## 🧹 Cleanup
 
 ```bash
-# Parar o port-forward (Ctrl+C)
+# Stop port-forward (Ctrl+C)
 
-# Remover tudo do namespace spark
+# Remove everything from the spark namespace
 kubectl delete namespace spark
 
-# Verificar
+# Verify
 kubectl get all -n spark
 # → "No resources found" ✅
 ```
 
 ---
 
-## ✅ O que aprendemos
+## ✅ What we learned
 
-| Conceito | O que fizemos |
+| Concept | What we did |
 |---|---|
-| **Namespace** | Isolamento do ambiente Spark (`spark`) |
-| **RBAC** | Permissões para o Spark criar Pods de Executor |
-| **Spark Master** | Coordenador do cluster Spark, rodando como Pod |
-| **Spark Workers** | Executores das tarefas, gerenciados como Deployment |
-| **spark-submit** | Submissão de jobs PySpark dentro do cluster K8s |
-| **Scaling** | Escalar Workers de 2 para 4 e voltar com um comando |
-| **Web UI** | Dashboard do Spark acessível via port-forward |
-| **kubectl cp** | Copiar arquivos para dentro de Pods |
+| **Namespace** | Spark environment isolation (`spark`) |
+| **RBAC** | Permissions for Spark to create Executor Pods |
+| **Spark Master** | Spark cluster coordinator, running as a Pod |
+| **Spark Workers** | Task executors, managed as a Deployment |
+| **spark-submit** | Submitting PySpark jobs inside the K8s cluster |
+| **Scaling** | Scale Workers from 2 to 4 and back with one command |
+| **Web UI** | Spark Dashboard accessible via port-forward |
+| **kubectl cp** | Copy files into Pods |
 
-### 🔗 Relação com Big Data
+### 🔗 Big Data Relationship
 
-| Antes (YARN/Hadoop) | Agora (Spark on K8s) |
+| Before (YARN/Hadoop) | Now (Spark on K8s) |
 |---|---|
-| Cluster fixo e pré-alocado | Pods criados sob demanda |
-| Capacidade ociosa em períodos sem jobs | Recursos liberados quando o job termina |
-| Difícil de escalar (adicionar máquinas) | `kubectl scale` ou HPA automático |
-| Infraestrutura separada para cada ferramenta | Spark, Kafka, Airflow no mesmo cluster K8s |
+| Fixed, pre-allocated cluster | Pods created on demand |
+| Idle capacity during jobless periods | Resources released when jobs finish |
+| Difficult to scale (add machines) | `kubectl scale` or automatic HPA |
+| Separate infrastructure per tool | Spark, Kafka, Airflow on the same K8s cluster |
 
 ---
 
-**Próximo:** [Lab 05 — Dashboard e Monitoramento](../lab-05-dashboard-e-monitoring/README.md) →
+**Next:** [Lab 05 — Dashboard and Monitoring](../lab-05-dashboard-e-monitoring/README.md) →

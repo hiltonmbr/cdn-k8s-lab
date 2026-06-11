@@ -1,57 +1,57 @@
-# 📖 05 — Services e Networking
+# 📖 05 — Services and Networking
 
-> **Objetivo:** Entender como Pods se comunicam entre si e com o mundo externo. Aprender os tipos de Service, DNS interno e Ingress. Ao final, você saberá expor aplicações de forma segura e estável.
+> **Objective:** Understand how Pods communicate with each other and with the outside world. Learn about Service types, internal DNS, and Ingress. By the end, you'll know how to expose applications securely and reliably.
 
 ---
 
-## 🤔 O Problema: Pods São Efêmeros
+## 🤔 The Problem: Pods Are Ephemeral
 
-Você aprendeu que Pods podem ser destruídos e recriados a qualquer momento. Quando isso acontece, eles recebem **novos IPs**:
+You learned that Pods can be destroyed and recreated at any time. When that happens, they receive **new IPs**:
 
 ```bash
-# Criar Deployment com 3 réplicas
+# Create a Deployment with 3 replicas
 kubectl apply -f deployment-api.yaml
 
-# Ver IPs dos Pods
+# View Pod IPs
 kubectl get pods -o wide
 # → NAME                     IP            NODE
 # → api-abc123   10.244.1.5   worker-1
 # → api-def456   10.244.2.3   worker-2
 # → api-ghi789   10.244.1.7   worker-1
 
-# Deletar um Pod (K8s recria automaticamente)
+# Delete a Pod (K8s recreates it automatically)
 kubectl delete pod api-abc123
 
-# Ver IPs novamente
+# View IPs again
 kubectl get pods -o wide
-# → api-xyz999   10.244.2.8   worker-2  ← NOVO IP!
+# → api-xyz999   10.244.2.8   worker-2  ← NEW IP!
 # → api-def456   10.244.2.3   worker-2
 # → api-ghi789   10.244.1.7   worker-1
 ```
 
-**Problema:** Se outro serviço precisa acessar essa API, para qual IP ele aponta? O IP muda a cada recriação!
+**Problem:** If another service needs to access this API, which IP does it point to? The IP changes every time it's recreated!
 
-> 💡 **Analogia:** Imagine que o número de telefone dos seus colegas mudasse toda vez que eles trocassem de aparelho. Seria impossível ligar para alguém. O **Service** é como uma "lista telefônica" com um número fixo que nunca muda.
+> 💡 **Analogy:** Imagine if your colleagues' phone numbers changed every time they switched devices. It would be impossible to call anyone. The **Service** is like a "phonebook" with a fixed number that never changes.
 
 ---
 
-## 🌐 Service: Endereço Virtual Estável
+## 🌐 Service: Stable Virtual Address
 
-Um **Service** cria um endereço virtual fixo (**Cluster IP**) que roteia tráfego para os Pods corretos, independente de quantos existam ou quais IPs tenham:
+A **Service** creates a fixed virtual address (**Cluster IP**) that routes traffic to the correct Pods, regardless of how many exist or which IPs they have:
 
 ```yaml
 # service-api.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: api-vendas           # Nome do Service (e entrada DNS!)
+  name: api-vendas           # Service name (and DNS entry!)
 spec:
   selector:
-    app: api-vendas           # "Roteie tráfego para Pods com esta label"
+    app: api-vendas           # "Route traffic to Pods with this label"
   ports:
-  - port: 80                  # Porta do Service
-    targetPort: 8000           # Porta do contêiner nos Pods
-  type: ClusterIP              # Tipo (padrão): acessível apenas dentro do cluster
+  - port: 80                  # Service port
+    targetPort: 8000           # Container port on the Pods
+  type: ClusterIP              # Type (default): accessible only inside the cluster
 ```
 
 ```
@@ -63,7 +63,7 @@ spec:
               │      selector: app=api-vendas              │
               └──────────┬───────────┬───────────┬────────┘
                          │           │           │
-                   Balanceamento de carga (round-robin)
+                   Load balancing (round-robin)
                          │           │           │
                   ┌──────▼──┐  ┌─────▼───┐  ┌───▼───────┐
                   │ Pod #1  │  │ Pod #2  │  │  Pod #3   │
@@ -74,15 +74,15 @@ spec:
 
 ---
 
-## 🏷️ Tipos de Service
+## 🏷️ Service Types
 
-### 1. ClusterIP (padrão) — Acesso interno
+### 1. ClusterIP (default) — Internal access
 
-Cria um IP virtual acessível **apenas dentro do cluster**. Ideal para comunicação entre serviços:
+Creates a virtual IP accessible **only within the cluster**. Ideal for inter-service communication:
 
 ```yaml
 spec:
-  type: ClusterIP    # Padrão — pode omitir
+  type: ClusterIP    # Default — can omit
   ports:
   - port: 80
     targetPort: 8000
@@ -90,18 +90,18 @@ spec:
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                   Cluster K8s                    │
+│                   K8s Cluster                    │
 │                                                  │
 │  Pod A ──► api-vendas:80 ──► Pod B (api-vendas) │
 │                                                  │
-│  ✅ Funciona dentro do cluster                    │
-│  ❌ NÃO acessível do seu navegador               │
+│  ✅ Works inside the cluster                      │
+│  ❌ NOT accessible from your browser              │
 └─────────────────────────────────────────────────┘
 ```
 
-### 2. NodePort — Acesso via porta do nó
+### 2. NodePort — Access via node port
 
-Expõe o Service em uma porta fixa (30000-32767) em **todos os nós** do cluster:
+Exposes the Service on a fixed port (30000-32767) on **all cluster nodes**:
 
 ```yaml
 spec:
@@ -109,17 +109,17 @@ spec:
   ports:
   - port: 80
     targetPort: 8000
-    nodePort: 30001    # Porta no nó (30000-32767)
+    nodePort: 30001    # Port on the node (30000-32767)
 ```
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  Seu Navegador                                           │
+│  Your Browser                                            │
 │     │                                                    │
 │     │ http://localhost:30001                              │
 │     ▼                                                    │
 │  ┌─────────────────────────────────────────────────┐     │
-│  │  Nó do Cluster (porta 30001)                    │     │
+│  │  Cluster Node (port 30001)                      │     │
 │  │     │                                            │     │
 │  │     ▼                                            │     │
 │  │  Service (ClusterIP:80)                          │     │
@@ -131,9 +131,9 @@ spec:
 └──────────────────────────────────────────────────────────┘
 ```
 
-### 3. LoadBalancer — Balanceador na nuvem
+### 3. LoadBalancer — Cloud load balancer
 
-Em provedores cloud (AWS, GCP, Azure), cria automaticamente um balanceador de carga externo com IP público:
+On cloud providers (AWS, GCP, Azure), automatically creates an external load balancer with a public IP:
 
 ```yaml
 spec:
@@ -143,61 +143,61 @@ spec:
     targetPort: 8000
 ```
 
-> ⚠️ **No kind:** O tipo LoadBalancer não provisiona um IP externo real (não há cloud provider). Use **NodePort** ou **port-forward** para acessar serviços localmente.
+> ⚠️ **On kind:** The LoadBalancer type does not provision a real external IP (no cloud provider). Use **NodePort** or **port-forward** to access services locally.
 
-### Resumo dos tipos
+### Type summary
 
-| Tipo | Acesso | Uso típico | Funciona no kind? |
+| Type | Access | Typical use | Works on kind? |
 |---|---|---|---|
-| **ClusterIP** | Apenas dentro do cluster | Comunicação entre serviços | ✅ Sim |
-| **NodePort** | IP do nó + porta (30000-32767) | Desenvolvimento, testes | ✅ Sim |
-| **LoadBalancer** | IP público (cloud) | Produção na nuvem | ⚠️ Parcial |
-| **ExternalName** | DNS externo (CNAME) | Apontar para serviços externos | ✅ Sim |
+| **ClusterIP** | Inside cluster only | Inter-service communication | ✅ Yes |
+| **NodePort** | Node IP + port (30000-32767) | Development, testing | ✅ Yes |
+| **LoadBalancer** | Public IP (cloud) | Cloud production | ⚠️ Partial |
+| **ExternalName** | External DNS (CNAME) | Point to external services | ✅ Yes |
 
 ---
 
-## 🌍 DNS Interno do Kubernetes
+## 🌍 Kubernetes Internal DNS
 
-O K8s possui um servidor DNS interno que resolve **nomes de Services** para seus ClusterIPs. Formato:
+K8s has an internal DNS server that resolves **Service names** to their ClusterIPs. Format:
 
 ```
-<nome-do-service>.<namespace>.svc.cluster.local
+<service-name>.<namespace>.svc.cluster.local
 ```
 
-Na prática, dentro do **mesmo namespace**, você pode usar apenas o nome:
+In practice, within the **same namespace**, you can use just the name:
 
 ```python
-# Python — conectar à API de vendas (mesmo namespace)
+# Python — connect to the sales API (same namespace)
 import requests
 response = requests.get("http://api-vendas:80/health")
 
-# Python — conectar ao banco no namespace "database"
+# Python — connect to the database in the "database" namespace
 import psycopg2
 conn = psycopg2.connect(host="postgres.database.svc.cluster.local", ...)
 ```
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│                    DNS Interno K8s                       │
+│                    K8s Internal DNS                      │
 │                                                         │
-│  Nome curto (mesmo namespace):                          │
+│  Short name (same namespace):                           │
 │    api-vendas  →  10.96.45.123                          │
 │                                                         │
-│  Nome completo (outro namespace):                       │
+│  Full name (different namespace):                       │
 │    api-vendas.default.svc.cluster.local → 10.96.45.123 │
 │                                                         │
-│  Nome completo (namespace database):                    │
+│  Full name (database namespace):                        │
 │    postgres.database.svc.cluster.local → 10.96.12.50   │
 └────────────────────────────────────────────────────────┘
 ```
 
-> 💡 **Comparação com Docker:** No Docker Compose, contêineres na mesma rede se encontram pelo nome do serviço (`postgres`, `redis`). No K8s é igual — mas via **Service**, não via nome do Pod.
+> 💡 **Comparison with Docker:** In Docker Compose, containers on the same network find each other by service name (`postgres`, `redis`). In K8s it's the same — but via **Service**, not via the Pod name.
 
 ---
 
-## 🔀 ExternalName: Apontando para Fora do Cluster
+## 🔀 ExternalName: Pointing Outside the Cluster
 
-O Service do tipo **ExternalName** não roteia para Pods — ele funciona como um **alias DNS** para um serviço externo:
+The **ExternalName** Service type does not route to Pods — it acts as a **DNS alias** for an external service:
 
 ```yaml
 # postgres-external-service.yaml
@@ -208,64 +208,64 @@ metadata:
   namespace: fullstack
 spec:
   type: ExternalName
-  externalName: host.docker.internal   # Aponta para o host (onde roda o Docker/PostgreSQL)
+  externalName: host.docker.internal   # Points to the host (where Docker/PostgreSQL runs)
 ```
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│  Cluster K8s                                           │
+│  K8s Cluster                                           │
 │                                                        │
-│  Pod (API) ──► "postgres" ──► DNS resolve para         │
+│  Pod (API) ──► "postgres" ──► DNS resolves to          │
 │                                host.docker.internal    │
 │                                    │                   │
 └────────────────────────────────────│───────────────────┘
                                      │
                                      ▼
 ┌────────────────────────────────────────────────────────┐
-│  Host (seu computador)                                 │
+│  Host (your computer)                                  │
 │                                                        │
-│  PostgreSQL rodando via Docker (fora do cluster)       │
-│  Porta: 5432                                           │
+│  PostgreSQL running via Docker (outside the cluster)   │
+│  Port: 5432                                            │
 └────────────────────────────────────────────────────────┘
 ```
 
-> 💡 **Caso de uso real:** Sua empresa tem um banco de dados gerenciado na AWS RDS. A API roda no K8s. Use ExternalName para que a API acesse o banco pelo nome `postgres` dentro do cluster — se um dia migrar o banco para dentro do K8s, basta trocar o tipo do Service. O código da API **não muda**.
+> 💡 **Real use case:** Your company has a managed database on AWS RDS. The API runs on K8s. Use ExternalName so the API accesses the database by the name `postgres` inside the cluster — if you ever migrate the database into K8s, just change the Service type. The API code **doesn't change**.
 
 ---
 
-## 🔌 Port-Forward: Acesso Rápido para Debug
+## 🔌 Port-Forward: Quick Debug Access
 
-O `kubectl port-forward` cria um túnel temporário do seu computador para um Pod ou Service:
+The `kubectl port-forward` command creates a temporary tunnel from your computer to a Pod or Service:
 
 ```bash
-# Encaminhar porta do Pod
+# Forward Pod port
 kubectl port-forward pod/api-vendas-abc123 8080:8000
-# → http://localhost:8080 acessa o Pod diretamente
+# → http://localhost:8080 accesses the Pod directly
 
-# Encaminhar porta do Service (balanceia entre Pods)
+# Forward Service port (load balances across Pods)
 kubectl port-forward svc/api-vendas 8080:80
-# → http://localhost:8080 acessa via Service
+# → http://localhost:8080 accesses via Service
 
-# Encaminhar para um Deployment
+# Forward to a Deployment
 kubectl port-forward deployment/api-vendas 8080:8000
 ```
 
-> ⚠️ **port-forward é para desenvolvimento/debug.** Não use em produção — o túnel fecha quando você interrompe o comando (Ctrl+C). Para acesso permanente, use NodePort ou Ingress.
+> ⚠️ **port-forward is for development/debug.** Don't use it in production — the tunnel closes when you stop the command (Ctrl+C). For permanent access, use NodePort or Ingress.
 
 ---
 
-## 📝 Resumo
+## 📝 Summary
 
-| Conceito | Definição |
+| Concept | Definition |
 |---|---|
-| **Service** | Endereço virtual estável que roteia tráfego para Pods via Labels |
-| **ClusterIP** | Tipo padrão — acessível apenas dentro do cluster |
-| **NodePort** | Expõe na porta do nó (30000-32767) — acesso externo |
-| **LoadBalancer** | Cria balanceador na nuvem com IP público |
-| **ExternalName** | Alias DNS para serviços fora do cluster |
-| **DNS interno** | `<service>.<namespace>.svc.cluster.local` |
-| **port-forward** | Túnel temporário para debug local |
+| **Service** | Stable virtual address that routes traffic to Pods via Labels |
+| **ClusterIP** | Default type — accessible only inside the cluster |
+| **NodePort** | Exposes on the node's port (30000-32767) — external access |
+| **LoadBalancer** | Creates a cloud load balancer with a public IP |
+| **ExternalName** | DNS alias for services outside the cluster |
+| **Internal DNS** | `<service>.<namespace>.svc.cluster.local` |
+| **port-forward** | Temporary tunnel for local debugging |
 
 ---
 
-**Próximo:** [06 — Volumes e ConfigMaps](06-volumes-e-configmaps.md) →
+**Next:** [06 — Volumes and ConfigMaps](06-volumes-e-configmaps.md) →

@@ -1,5 +1,5 @@
-# Deployment do pgAdmin — interface gráfica para PostgreSQL
-# Conecta ao PostgreSQL externo (fora do cluster)
+# pgAdmin Deployment — graphical interface for PostgreSQL
+# Connects to external PostgreSQL (outside the cluster)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -37,8 +37,8 @@ spec:
             memory: "512Mi"
             cpu: "500m"
 ---
-# Service NodePort para o pgAdmin
-# Acessível via port-forward (não temos mais portas mapeadas no kind)
+# NodePort Service for pgAdmin
+# Accessible via port-forward (no more ports mapped in kind)
 apiVersion: v1
 kind: Service
 metadata:

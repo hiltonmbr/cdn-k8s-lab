@@ -1,12 +1,12 @@
-# Service do tipo ExternalName — aponta para o PostgreSQL externo
+# ExternalName Service — points to external PostgreSQL
 #
-# O PostgreSQL roda como contêiner Docker FORA do cluster K8s.
-# Este Service cria um alias DNS dentro do cluster, permitindo
-# que os Pods acessem o banco pelo nome "postgres" em vez de
-# precisar saber o IP/hostname do host.
+# PostgreSQL runs as a Docker container OUTSIDE the K8s cluster.
+# This Service creates a DNS alias inside the cluster, allowing
+# Pods to reach the database by the name "postgres" instead of
+# needing to know the host IP/hostname.
 #
-# host.docker.internal é um hostname especial que resolve para
-# o IP do host (seu computador) a partir de dentro do Docker.
+# host.docker.internal is a special hostname that resolves to
+# the host IP (your computer) from inside Docker.
 apiVersion: v1
 kind: Service
 metadata:

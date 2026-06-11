@@ -1,5 +1,5 @@
 # Spark Workers — Deployment
-# Os Workers conectam ao Master e executam as tarefas dos jobs
+# Workers connect to the Master and execute job tasks
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -8,7 +8,7 @@ metadata:
   labels:
     app: spark-worker
 spec:
-  replicas: 2                    # 2 Workers iniciais (escalar conforme necessário)
+  replicas: 2                    # 2 initial Workers (scale as needed)
   selector:
     matchLabels:
       app: spark-worker
@@ -31,7 +31,7 @@ spec:
         - name: SPARK_WORKER_CORES
           value: "1"
         ports:
-        - containerPort: 8081   # Web UI do Worker
+        - containerPort: 8081   # Worker Web UI
         resources:
           requests:
             memory: "512Mi"

@@ -1,18 +1,18 @@
-# Imagem base leve com Python
+# Lightweight Python base image
 FROM python:3.12-slim
 
-# Diretório de trabalho
+# Working directory
 WORKDIR /app
 
-# Instalar dependências primeiro (cache Docker)
+# Install dependencies first (Docker cache)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar código da aplicação
+# Copy application code
 COPY app.py .
 
-# Porta exposta pelo contêiner
+# Container exposed port
 EXPOSE 8000
 
-# Comando de inicialização
+# Startup command
 CMD ["python", "app.py"]

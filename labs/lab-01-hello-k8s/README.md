@@ -1,26 +1,26 @@
-# 🧪 Lab 01 — Hello K8s: Seu Primeiro Cluster
+# 🧪 Lab 01 — Hello K8s: Your First Cluster
 
-> **Objetivo:** Criar um cluster Kubernetes local com kind, rodar seu primeiro Pod, explorá-lo com kubectl e entender a diferença entre modo imperativo e declarativo.
+> **Objective:** Create a local Kubernetes cluster with kind, run your first Pod, explore it with kubectl, and understand the difference between imperative and declarative modes.
 
-> **Pré-requisito:** Docker instalado e rodando. Verifique com `docker version`.
+> **Prerequisite:** Docker installed and running. Verify with `docker version`.
 
-> **Tempo estimado:** 30 minutos
-
----
-
-## 📋 O que você vai praticar
-
-- [x] Instalar kind e kubectl
-- [x] Criar e destruir clusters Kubernetes locais
-- [x] Rodar Pods de forma imperativa e declarativa
-- [x] Usar `kubectl` para inspecionar, logar e acessar Pods
-- [x] Entender `port-forward` para acessar serviços no navegador
+> **Estimated time:** 30 minutes
 
 ---
 
-## 🔬 Exercício 1: Instalação das Ferramentas
+## 📋 What you'll practice
 
-### Passo 1 — Instalar kind
+- [x] Install kind and kubectl
+- [x] Create and destroy local Kubernetes clusters
+- [x] Run Pods imperatively and declaratively
+- [x] Use `kubectl` to inspect, log, and access Pods
+- [x] Understand `port-forward` to access services in the browser
+
+---
+
+## 🔬 Exercise 1: Tool Installation
+
+### Step 1 — Install kind
 
 ```bash
 # macOS (via Homebrew)
@@ -35,7 +35,7 @@ sudo mv ./kind /usr/local/bin/kind
 choco install kind
 ```
 
-### Passo 2 — Instalar kubectl
+### Step 2 — Install kubectl
 
 ```bash
 # macOS
@@ -50,7 +50,7 @@ sudo mv kubectl /usr/local/bin/kubectl
 choco install kubernetes-cli
 ```
 
-### Passo 3 — Verificar
+### Step 3 — Verify
 
 ```bash
 kind version
@@ -60,19 +60,19 @@ kubectl version --client
 # → Client Version: v1.31.x
 ```
 
-> 💡 Se ambos os comandos retornaram versão, você está pronto!
+> 💡 If both commands returned a version, you're ready!
 
 ---
 
-## 🔬 Exercício 2: Seu Primeiro Cluster
+## 🔬 Exercise 2: Your First Cluster
 
-### Passo 1 — Criar o cluster
+### Step 1 — Create the cluster
 
 ```bash
 kind create cluster --name hello-k8s
 ```
 
-Saída esperada:
+Expected output:
 ```
 Creating cluster "hello-k8s" ...
  ✓ Ensuring node image (kindest/node:v1.31.0) 🖼
@@ -84,34 +84,34 @@ Creating cluster "hello-k8s" ...
 Set kubectl context to "kind-hello-k8s"
 ```
 
-### Passo 2 — Verificar o cluster
+### Step 2 — Verify the cluster
 
 ```bash
-# Informações do cluster
+# Cluster info
 kubectl cluster-info
 # → Kubernetes control plane is running at https://127.0.0.1:xxxxx
 
-# Listar nós
+# List nodes
 kubectl get nodes
 # → NAME                     STATUS   ROLES           AGE   VERSION
 # → hello-k8s-control-plane  Ready    control-plane   30s   v1.31.0
 ```
 
-### Passo 3 — Espiar por baixo dos panos
+### Step 3 — Peek under the hood
 
 ```bash
-# O kind criou um contêiner Docker! Veja:
+# kind created a Docker container! See:
 docker ps --filter "name=hello-k8s"
 # → CONTAINER ID   IMAGE                  NAMES
 # → abc123def456   kindest/node:v1.31.0   hello-k8s-control-plane
 ```
 
-> 💡 **Reflexão:** Seu cluster Kubernetes inteiro está rodando dentro de um contêiner Docker. É "Kubernetes dentro do Docker" — simples e leve!
+> 💡 **Reflection:** Your entire Kubernetes cluster is running inside a Docker container. It's "Kubernetes inside Docker" — simple and lightweight!
 
-### Passo 4 — Explorar os componentes do cluster
+### Step 4 — Explore cluster components
 
 ```bash
-# Ver todos os Pods do sistema (Control Plane)
+# View all system Pods (Control Plane)
 kubectl get pods -n kube-system
 # → NAME                                             READY   STATUS
 # → coredns-xxx                                      1/1     Running
@@ -123,20 +123,20 @@ kubectl get pods -n kube-system
 # → kube-proxy-xxx                                    1/1     Running
 ```
 
-> 🧠 **Observe:** O API Server, etcd, Scheduler e Controller Manager que aprendemos na documentação estão todos ali, rodando como Pods no namespace `kube-system`!
+> 🧠 **Notice:** The API Server, etcd, Scheduler, and Controller Manager we learned about in the documentation are all there, running as Pods in the `kube-system` namespace!
 
 ---
 
-## 🔬 Exercício 3: Primeiro Pod (Modo Imperativo)
+## 🔬 Exercise 3: First Pod (Imperative Mode)
 
-### Passo 1 — Criar um Pod Nginx
+### Step 1 — Create an Nginx Pod
 
 ```bash
 kubectl run meu-nginx --image=nginx:1.27 --port=80
 # → pod/meu-nginx created
 ```
 
-### Passo 2 — Verificar
+### Step 2 — Verify
 
 ```bash
 kubectl get pods
@@ -144,37 +144,37 @@ kubectl get pods
 # → meu-nginx   1/1     Running   0          10s
 ```
 
-### Passo 3 — Acessar no navegador via port-forward
+### Step 3 — Access in the browser via port-forward
 
 ```bash
-# Criar túnel: porta 8080 do seu computador → porta 80 do Pod
+# Create tunnel: port 8080 on your computer → port 80 on the Pod
 kubectl port-forward pod/meu-nginx 8080:80
 # → Forwarding from 127.0.0.1:8080 -> 80
 ```
 
-Abra outro terminal e teste:
+Open another terminal and test:
 ```bash
 curl http://localhost:8080
 # → <!DOCTYPE html>... Welcome to nginx! ...
 ```
 
-Ou abra no navegador: **http://localhost:8080** — Welcome to nginx! 🎉
+Or open in the browser: **http://localhost:8080** — Welcome to nginx! 🎉
 
-Pressione `Ctrl+C` no terminal do port-forward para encerrar.
+Press `Ctrl+C` in the port-forward terminal to stop.
 
-### Passo 4 — Explorar o Pod
+### Step 4 — Explore the Pod
 
 ```bash
-# Detalhes completos do Pod (eventos, IPs, nó, status)
+# Full Pod details (events, IPs, node, status)
 kubectl describe pod meu-nginx
 
-# Logs do Nginx
+# Nginx logs
 kubectl logs meu-nginx
 
-# Entrar no Pod (shell interativo)
+# Enter the Pod (interactive shell)
 kubectl exec -it meu-nginx -- bash
 
-# Dentro do Pod:
+# Inside the Pod:
 hostname
 # → meu-nginx
 
@@ -187,31 +187,31 @@ curl localhost:80
 exit
 ```
 
-### Passo 5 — Testar o auto-healing (ou falta dele!)
+### Step 5 — Test auto-healing (or lack thereof!)
 
 ```bash
-# Deletar o Pod
+# Delete the Pod
 kubectl delete pod meu-nginx
 
-# Verificar
+# Verify
 kubectl get pods
-# → Nenhum Pod! 😱
+# → No Pods! 😱
 ```
 
-> ⚠️ **Lição:** Pods criados diretamente (`kubectl run`) **não são recriados** quando morrem. Para auto-healing, precisamos de Deployments — tema do Lab 02!
+> ⚠️ **Lesson:** Pods created directly (`kubectl run`) **are not recreated** when they die. For auto-healing, we need Deployments — topic of Lab 02!
 
 ---
 
-## 🔬 Exercício 4: Primeiro Pod (Modo Declarativo — YAML)
+## 🔬 Exercise 4: First Pod (Declarative Mode — YAML)
 
-Agora vamos criar o mesmo Pod, mas usando um arquivo YAML:
+Now let's create the same Pod, but using a YAML file:
 
-### Passo 1 — Criar o arquivo YAML
+### Step 1 — Create the YAML file
 
-Crie o arquivo `pod-nginx.yaml`:
+Create the file `pod-nginx.yaml`:
 
 ```yaml
-# pod-nginx.yaml — Meu primeiro Pod declarativo
+# pod-nginx.yaml — My first declarative Pod
 apiVersion: v1
 kind: Pod
 metadata:
@@ -234,77 +234,77 @@ spec:
         cpu: "100m"
 ```
 
-### Passo 2 — Aplicar o YAML
+### Step 2 — Apply the YAML
 
 ```bash
 kubectl apply -f pod-nginx.yaml
 # → pod/nginx-declarativo created
 ```
 
-### Passo 3 — Verificar
+### Step 3 — Verify
 
 ```bash
 kubectl get pods
 # → NAME                READY   STATUS    RESTARTS   AGE
 # → nginx-declarativo   1/1     Running   0          5s
 
-# Ver com labels
+# View with labels
 kubectl get pods --show-labels
 # → NAME                LABELS
 # → nginx-declarativo   app=nginx,lab=01
 ```
 
-### Passo 4 — Filtrar por labels
+### Step 4 — Filter by labels
 
 ```bash
-# Listar Pods com label app=nginx
+# List Pods with label app=nginx
 kubectl get pods -l app=nginx
 # → nginx-declarativo
 
-# Listar Pods do Lab 01
+# List Pods from Lab 01
 kubectl get pods -l lab=01
 # → nginx-declarativo
 ```
 
-### Passo 5 — Acessar
+### Step 5 — Access
 
 ```bash
 kubectl port-forward pod/nginx-declarativo 8080:80
-# Abra: http://localhost:8080
-# Ctrl+C para parar
+# Open: http://localhost:8080
+# Ctrl+C to stop
 ```
 
-### Passo 6 — Deletar via YAML
+### Step 6 — Delete via YAML
 
 ```bash
 kubectl delete -f pod-nginx.yaml
 # → pod "nginx-declarativo" deleted
 ```
 
-> 💡 **Vantagem do declarativo:** O YAML pode ir para o Git, ser versionado, revisado por colegas e aplicado em qualquer cluster. É reproduzível!
+> 💡 **Declarative advantage:** The YAML can go to Git, be versioned, reviewed by peers, and applied to any cluster. It's reproducible!
 
 ---
 
-## 🔬 Exercício 5: Cluster Multi-Node
+## 🔬 Exercise 5: Multi-Node Cluster
 
-Vamos criar um cluster com 3 nós para simular um ambiente mais realista:
+Let's create a cluster with 3 nodes to simulate a more realistic environment:
 
-### Passo 1 — Deletar o cluster anterior
+### Step 1 — Delete the previous cluster
 
 ```bash
 kind delete cluster --name hello-k8s
 ```
 
-### Passo 2 — Criar cluster multi-node
+### Step 2 — Create a multi-node cluster
 
-Use o arquivo `kind-config.yaml` da raiz deste repositório:
+Use the `kind-config.yaml` file from the root of this repository:
 
 ```bash
-# A partir da raiz do cdn-k8s-lab
+# From the root of cdn-k8s-lab
 kind create cluster --name k8s-lab --config kind-config.yaml
 ```
 
-### Passo 3 — Verificar os 3 nós
+### Step 3 — Verify the 3 nodes
 
 ```bash
 kubectl get nodes
@@ -314,22 +314,22 @@ kubectl get nodes
 # → k8s-lab-worker2         Ready    <none>          20s   v1.31.0
 ```
 
-### Passo 4 — Ver os contêineres Docker
+### Step 4 — View the Docker containers
 
 ```bash
 docker ps --filter "name=k8s-lab"
-# → 3 contêineres! Um para cada nó do cluster.
+# → 3 containers! One for each cluster node.
 ```
 
-### Passo 5 — Criar Pods e ver distribuição
+### Step 5 — Create Pods and see distribution
 
 ```bash
-# Criar 3 Pods
+# Create 3 Pods
 kubectl run pod-1 --image=nginx:1.27
 kubectl run pod-2 --image=nginx:1.27
 kubectl run pod-3 --image=nginx:1.27
 
-# Ver em qual nó cada Pod foi alocado
+# See which node each Pod was assigned to
 kubectl get pods -o wide
 # → NAME    READY   STATUS    IP           NODE
 # → pod-1   1/1     Running   10.244.1.2   k8s-lab-worker
@@ -337,43 +337,43 @@ kubectl get pods -o wide
 # → pod-3   1/1     Running   10.244.1.4   k8s-lab-worker
 ```
 
-> 🧠 **Observe:** O Scheduler do K8s distribuiu os Pods entre os Workers automaticamente! Ele tenta balancear a carga entre os nós.
+> 🧠 **Notice:** The K8s Scheduler distributed the Pods among the Workers automatically! It tries to balance the load across nodes.
 
 ---
 
-## 🧹 Limpeza Final
+## 🧹 Final Cleanup
 
 ```bash
-# Deletar os Pods de teste
+# Delete the test Pods
 kubectl delete pod pod-1 pod-2 pod-3
 
-# Manter o cluster k8s-lab para os próximos Labs!
-# Ou, se quiser deletar tudo:
+# Keep the k8s-lab cluster for the next Labs!
+# Or, if you want to delete everything:
 # kind delete cluster --name k8s-lab
 ```
 
-> 💡 **Dica:** Mantenha o cluster `k8s-lab` rodando — você vai usá-lo nos próximos Labs. Se precisar recriar, basta rodar `kind create cluster --name k8s-lab --config kind-config.yaml` novamente.
+> 💡 **Tip:** Keep the `k8s-lab` cluster running — you'll use it in the next Labs. If you need to recreate it, just run `kind create cluster --name k8s-lab --config kind-config.yaml` again.
 
 ---
 
-## ✅ O que aprendemos
+## ✅ What we learned
 
-| Conceito | Comando |
+| Concept | Command |
 |---|---|
-| Criar cluster kind | `kind create cluster --name lab` |
-| Criar cluster multi-node | `kind create cluster --config kind-config.yaml` |
-| Ver nós do cluster | `kubectl get nodes` |
-| Criar Pod (imperativo) | `kubectl run nginx --image=nginx:1.27` |
-| Criar Pod (declarativo) | `kubectl apply -f pod.yaml` |
-| Acessar Pod no navegador | `kubectl port-forward pod/nome 8080:80` |
-| Ver logs | `kubectl logs nome` |
-| Entrar no Pod | `kubectl exec -it nome -- bash` |
-| Detalhes do Pod | `kubectl describe pod nome` |
-| Filtrar por labels | `kubectl get pods -l app=nginx` |
-| Deletar Pod | `kubectl delete pod nome` |
-| Deletar via YAML | `kubectl delete -f pod.yaml` |
-| Deletar cluster | `kind delete cluster --name lab` |
+| Create kind cluster | `kind create cluster --name lab` |
+| Create multi-node cluster | `kind create cluster --config kind-config.yaml` |
+| View cluster nodes | `kubectl get nodes` |
+| Create Pod (imperative) | `kubectl run nginx --image=nginx:1.27` |
+| Create Pod (declarative) | `kubectl apply -f pod.yaml` |
+| Access Pod in browser | `kubectl port-forward pod/name 8080:80` |
+| View logs | `kubectl logs name` |
+| Enter the Pod | `kubectl exec -it name -- bash` |
+| Pod details | `kubectl describe pod name` |
+| Filter by labels | `kubectl get pods -l app=nginx` |
+| Delete Pod | `kubectl delete pod name` |
+| Delete via YAML | `kubectl delete -f pod.yaml` |
+| Delete cluster | `kind delete cluster --name lab` |
 
 ---
 
-**Próximo:** [Lab 02 — Deployments na Prática](../lab-02-deployments/README.md) →
+**Next:** [Lab 02 — Deployments in Practice](../lab-02-deployments/README.md) →

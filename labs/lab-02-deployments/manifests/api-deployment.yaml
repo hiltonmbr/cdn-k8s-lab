@@ -1,5 +1,5 @@
-# Deployment da API de Vendas
-# Mantém 3 réplicas sempre ativas com rolling update
+# Sales API Deployment
+# Keeps 3 replicas always active with rolling update
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,15 +7,15 @@ metadata:
   labels:
     app: api-vendas
 spec:
-  replicas: 3                      # 3 Pods ativos o tempo todo
+  replicas: 3                      # 3 Pods always active
   selector:
     matchLabels:
       app: api-vendas
   strategy:
-    type: RollingUpdate            # Atualização gradual, sem downtime
+    type: RollingUpdate            # Gradual update, no downtime
     rollingUpdate:
-      maxSurge: 1                  # Máximo 1 Pod extra durante atualização
-      maxUnavailable: 0            # Nenhum Pod indisponível
+      maxSurge: 1                  # Max 1 extra Pod during update
+      maxUnavailable: 0            # No Pods unavailable
   template:
     metadata:
       labels:
@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: api
-        image: api-vendas:1.0      # Imagem local (construída no Lab)
+        image: api-vendas:1.0      # Local image (built in the Lab)
         ports:
         - containerPort: 8000
         env:

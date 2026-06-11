@@ -1,5 +1,5 @@
-# Service para a API de Vendas
-# Tipo NodePort: acessível via http://localhost:30001
+# Sales API Service
+# NodePort type: accessible at http://localhost:30001
 apiVersion: v1
 kind: Service
 metadata:
@@ -7,10 +7,10 @@ metadata:
   labels:
     app: api-vendas
 spec:
-  type: NodePort                   # Acessível fora do cluster
+  type: NodePort                   # Accessible outside the cluster
   selector:
-    app: api-vendas                # Roteia para Pods com label app=api-vendas
+    app: api-vendas                # Routes to Pods with label app=api-vendas
   ports:
-  - port: 80                      # Porta do Service (interna)
-    targetPort: 8000               # Porta do contêiner
-    nodePort: 30001                # Porta no nó (acessível via localhost)
+  - port: 80                      # Service port (internal)
+    targetPort: 8000               # Container port
+    nodePort: 30001                # Node port (accessible via localhost)

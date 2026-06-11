@@ -1,33 +1,33 @@
-# 🧪 Lab 03 — App Fullstack: K8s + Banco Externo
+# 🧪 Lab 03 — Fullstack App: K8s + External DB
 
-> **Objetivo:** Criar uma aplicação completa com API Python rodando no cluster K8s e PostgreSQL rodando **fora** do cluster como contêiner Docker — simulando o cenário real de banco de dados gerenciado (AWS RDS, Google Cloud SQL, servidor dedicado).
+> **Objective:** Create a complete application with a Python API running on the K8s cluster and PostgreSQL running **outside** the cluster as a Docker container — simulating the real-world scenario of a managed database (AWS RDS, Google Cloud SQL, dedicated server).
 
-> **Pré-requisito:** Cluster `k8s-lab` rodando (Lab 01). Docker instalado.
+> **Prerequisite:** `k8s-lab` cluster running (Lab 01). Docker installed.
 
-> **Tempo estimado:** 40 minutos
-
----
-
-## 📋 O que você vai praticar
-
-- [x] Subir PostgreSQL como contêiner Docker externo (fora do K8s)
-- [x] Criar Namespace para isolar o projeto
-- [x] Usar Secrets para armazenar credenciais do banco
-- [x] Criar Service ExternalName para acessar serviço externo
-- [x] Deploy da API Flask com conexão ao banco externo
-- [x] Deploy do pgAdmin para gerenciar o banco visualmente
-- [x] Testar resiliência: deletar Pods sem perder dados
+> **Estimated time:** 40 minutes
 
 ---
 
-## 🏗️ Arquitetura do Lab
+## 📋 What you will practice
+
+- [x] Set up PostgreSQL as an external Docker container (outside K8s)
+- [x] Create a Namespace to isolate the project
+- [x] Use Secrets to store database credentials
+- [x] Create an ExternalName Service to access the external service
+- [x] Deploy the Flask API with external database connection
+- [x] Deploy pgAdmin to visually manage the database
+- [x] Test resilience: delete Pods without losing data
+
+---
+
+## 🏗️ Lab Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Seu Computador (Host)                     │
+│                    Your Computer (Host)                     │
 │                                                             │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │  Cluster K8s (kind)                                   │  │
+│  │  K8s Cluster (kind)                                   │  │
 │  │  Namespace: fullstack                                 │  │
 │  │                                                       │  │
 │  │  ┌────────────┐  ┌────────────┐  ┌────────────────┐  │  │
@@ -37,25 +37,25 @@
 │  │        │               │                  │           │  │
 │  │  ┌─────▼───────────────▼──────────────────▼────────┐  │  │
 │  │  │     Service: postgres (ExternalName)             │  │  │
-│  │  │     → resolve para host.docker.internal          │  │  │
+│  │  │     → resolves to host.docker.internal           │  │  │
 │  │  └─────────────────────┬───────────────────────────┘  │  │
 │  └────────────────────────│──────────────────────────────┘  │
 │                           │                                  │
 │                    ┌──────▼───────┐                          │
-│                    │ PostgreSQL   │  ← Contêiner Docker      │
-│                    │ (externo)    │     FORA do cluster       │
-│                    │ porta: 5432  │                           │
+│                    │ PostgreSQL   │  ← Docker Container      │
+│                    │ (external)   │     OUTSIDE the cluster   │
+│                    │ port: 5432   │                          │
 │                    └──────────────┘                          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-> 💡 **Por que este padrão?** Em produção, bancos de dados quase **nunca** rodam dentro do cluster K8s. Eles ficam em serviços gerenciados (AWS RDS, Cloud SQL) ou servidores dedicados. Isso separa o **stateless** (API, que escala facilmente) do **stateful** (banco, que precisa de cuidados especiais com dados).
+> 💡 **Why this pattern?** In production, databases almost **never** run inside the K8s cluster. They run on managed services (AWS RDS, Cloud SQL) or dedicated servers. This separates **stateless** (API, which scales easily) from **stateful** (database, which needs special data care).
 
 ---
 
-## 🔬 Exercício 1: Subir o PostgreSQL Externo
+## 🔬 Exercise 1: Start the External PostgreSQL
 
-### Passo 1 — Iniciar o PostgreSQL via Docker (fora do cluster)
+### Step 1 — Start PostgreSQL via Docker (outside the cluster)
 
 ```bash
 docker run -d \
@@ -66,24 +66,24 @@ docker run -d \
   postgres:16
 ```
 
-### Passo 2 — Verificar que está rodando
+### Step 2 — Verify it's running
 
 ```bash
 docker ps --filter "name=postgres-externo"
 # → STATUS: Up X seconds
 
-# Testar conexão diretamente
+# Test connection directly
 docker exec -it postgres-externo psql -U postgres -d escola -c "SELECT 1"
 # → 1
 ```
 
-> 🧠 **Observe:** O PostgreSQL está rodando como um contêiner Docker **comum**, fora do cluster K8s. Ele não sabe que o K8s existe. É um servidor de banco de dados independente.
+> 🧠 **Notice:** PostgreSQL is running as a regular **Docker** container, outside the K8s cluster. It doesn't know K8s exists. It's an independent database server.
 
 ---
 
-## 🔬 Exercício 2: Preparar os Recursos K8s
+## 🔬 Exercise 2: Prepare the K8s Resources
 
-### Passo 1 — Construir a imagem da API
+### Step 1 — Build the API image
 
 ```bash
 cd labs/lab-03-app-fullstack/app
@@ -94,56 +94,56 @@ kind load docker-image api-escola:1.0 --name k8s-lab
 cd ../../..
 ```
 
-### Passo 2 — Criar o Namespace
+### Step 2 — Create the Namespace
 
 ```bash
 kubectl apply -f labs/lab-03-app-fullstack/manifests/namespace.yaml
 # → namespace/fullstack created
 
-# Verificar
+# Verify
 kubectl get namespaces
 # → NAME          STATUS   AGE
 # → default       Active   ...
-# → fullstack     Active   5s  ← Nosso namespace!
+# → fullstack     Active   5s  ← Our namespace!
 # → kube-system   Active   ...
 ```
 
-### Passo 3 — Criar o Secret com credenciais
+### Step 3 — Create the Secret with credentials
 
 ```bash
 kubectl apply -f labs/lab-03-app-fullstack/manifests/postgres-secret.yaml
 # → secret/postgres-secret created
 
-# Verificar (o conteúdo é Base64, não texto puro)
+# Verify (content is Base64, not plain text)
 kubectl get secret postgres-secret -n fullstack -o yaml
 ```
 
-### Passo 4 — Criar o Service ExternalName
+### Step 4 — Create the ExternalName Service
 
 ```bash
 kubectl apply -f labs/lab-03-app-fullstack/manifests/postgres-external-service.yaml
 # → service/postgres created
 
-# Verificar
+# Verify
 kubectl get svc -n fullstack
 # → NAME       TYPE           CLUSTER-IP   EXTERNAL-IP              PORT(S)   AGE
 # → postgres   ExternalName   <none>       host.docker.internal     <none>    5s
 ```
 
-> 💡 **O que aconteceu?** Criamos um "alias DNS" dentro do cluster. Quando qualquer Pod no namespace `fullstack` acessar o hostname `postgres`, o DNS do K8s resolve para `host.docker.internal`, que é o IP do seu computador — onde o PostgreSQL está rodando!
+> 💡 **What happened?** We created a "DNS alias" inside the cluster. When any Pod in the `fullstack` namespace accesses the hostname `postgres`, K8s DNS resolves it to `host.docker.internal`, which is your computer's IP — where PostgreSQL is running!
 
 ---
 
-## 🔬 Exercício 3: Deploy da API
+## 🔬 Exercise 3: Deploy the API
 
-### Passo 1 — Aplicar o Deployment e o Service da API
+### Step 1 — Apply the API Deployment and Service
 
 ```bash
 kubectl apply -f labs/lab-03-app-fullstack/manifests/api-deployment.yaml
 kubectl apply -f labs/lab-03-app-fullstack/manifests/api-service.yaml
 ```
 
-### Passo 2 — Verificar os Pods
+### Step 2 — Verify the Pods
 
 ```bash
 kubectl get pods -n fullstack
@@ -152,10 +152,10 @@ kubectl get pods -n fullstack
 # → api-escola-xxx-def34         1/1     Running   0          10s
 ```
 
-### Passo 3 — Testar a API
+### Step 3 — Test the API
 
 ```bash
-# Acessar via NodePort
+# Access via NodePort
 curl http://localhost:30002 | python3 -m json.tool
 # → {
 # →   "app": "API Escola — K8s Lab",
@@ -164,16 +164,16 @@ curl http://localhost:30002 | python3 -m json.tool
 # →   ...
 # → }
 
-# Health check (verifica conexão com banco)
+# Health check (verifies database connection)
 curl http://localhost:30002/health | python3 -m json.tool
 # → {"database": "connected", "status": "healthy"}
 
-# Listar alunos (dados pré-inseridos)
+# List students (pre-inserted data)
 curl http://localhost:30002/alunos | python3 -m json.tool
 # → {"alunos": [...], "total": 5}
 ```
 
-### Passo 4 — Inserir um novo aluno via API
+### Step 4 — Insert a new student via API
 
 ```bash
 curl -X POST http://localhost:30002/alunos \
@@ -181,146 +181,146 @@ curl -X POST http://localhost:30002/alunos \
   -d '{"nome": "Kubernetes Aluno", "email": "k8s@lab.com", "nota": 9.9}'
 # → {"id": 6, "nome": "Kubernetes Aluno", "email": "k8s@lab.com", "nota": "9.90"}
 
-# Verificar que foi inserido
+# Verify it was inserted
 curl http://localhost:30002/alunos | python3 -m json.tool
-# → total: 6 ← Novo aluno aparece!
+# → total: 6 ← New student appears!
 ```
 
 ---
 
-## 🔬 Exercício 4: Deploy do pgAdmin
+## 🔬 Exercise 4: Deploy pgAdmin
 
-### Passo 1 — Aplicar o Deployment do pgAdmin
+### Step 1 — Apply the pgAdmin Deployment
 
 ```bash
 kubectl apply -f labs/lab-03-app-fullstack/manifests/pgadmin-deployment.yaml
 ```
 
-### Passo 2 — Aguardar (pgAdmin é pesado, pode demorar)
+### Step 2 — Wait (pgAdmin is heavy, may take a while)
 
 ```bash
 kubectl get pods -n fullstack --watch
-# Espere até que o Pod do pgAdmin esteja "Running"
+# Wait until the pgAdmin Pod is "Running"
 ```
 
-### Passo 3 — Acessar o pgAdmin
+### Step 3 — Access pgAdmin
 
 ```bash
-# Port-forward para acessar no navegador
+# Port-forward to access in the browser
 kubectl port-forward svc/pgadmin -n fullstack 5050:80
 # → Forwarding from 127.0.0.1:5050 -> 80
 ```
 
-Abra: **http://localhost:5050**
+Open: **http://localhost:5050**
 
 - **Email:** admin@lab.com
-- **Senha:** admin123
+- **Password:** admin123
 
-### Passo 4 — Conectar ao PostgreSQL no pgAdmin
+### Step 4 — Connect to PostgreSQL in pgAdmin
 
-1. Clique em **"Add New Server"**
-2. Na aba **General**: Nome = `PostgreSQL Externo`
-3. Na aba **Connection**:
+1. Click **"Add New Server"**
+2. In **General** tab: Name = `PostgreSQL Externo`
+3. In **Connection** tab:
    - **Host:** `host.docker.internal`
    - **Port:** `5432`
    - **Database:** `escola`
    - **Username:** `postgres`
    - **Password:** `senha123`
-4. Clique **Save**
+4. Click **Save**
 
-Agora você pode navegar pelas tabelas, ver os dados dos alunos e executar queries SQL diretamente!
+Now you can browse tables, view student data, and run SQL queries directly!
 
 ---
 
-## 🔬 Exercício 5: Testando Resiliência
+## 🔬 Exercise 5: Testing Resilience
 
-### Teste 1 — Deletar Pods da API (dados persistem!)
+### Test 1 — Delete API Pods (data persists!)
 
 ```bash
-# Deletar TODOS os Pods da API
+# Delete ALL API Pods
 kubectl delete pods -l app=api-escola -n fullstack
 
-# Verificar: K8s recria automaticamente
+# Verify: K8s recreates automatically
 kubectl get pods -n fullstack --watch
 
-# Testar: os dados do banco estão intactos!
+# Test: the database data is intact!
 curl http://localhost:30002/alunos | python3 -m json.tool
-# → O aluno "Kubernetes Aluno" ainda está lá! 🎉
+# → The student "Kubernetes Aluno" is still there! 🎉
 ```
 
-> 🧠 **Por quê?** O banco de dados está **fora** do cluster. Deletar Pods da API não afeta o banco. Os novos Pods reconectam automaticamente.
+> 🧠 **Why?** The database is **outside** the cluster. Deleting API Pods does not affect the database. New Pods reconnect automatically.
 
-### Teste 2 — Escalar a API
+### Test 2 — Scale the API
 
 ```bash
-# Escalar para 5 réplicas
+# Scale to 5 replicas
 kubectl scale deployment api-escola --replicas=5 -n fullstack
 
-# Verificar
+# Verify
 kubectl get pods -n fullstack -l app=api-escola
-# → 5 Pods rodando!
+# → 5 Pods running!
 
-# Testar load balancing
+# Test load balancing
 for i in {1..5}; do curl -s http://localhost:30002 | python3 -m json.tool | grep pod; done
-# → Hostnames diferentes a cada requisição (balanceamento)
+# → Different hostnames each request (load balancing)
 
-# Voltar para 2 réplicas
+# Back to 2 replicas
 kubectl scale deployment api-escola --replicas=2 -n fullstack
 ```
 
-### Teste 3 — Parar e reiniciar o PostgreSQL
+### Test 3 — Stop and restart PostgreSQL
 
 ```bash
-# Parar o banco externo
+# Stop the external database
 docker stop postgres-externo
 
-# Testar a API
+# Test the API
 curl http://localhost:30002/health
-# → {"status": "unhealthy", "error": "..."} ← API detecta a falha!
+# → {"status": "unhealthy", "error": "..."} ← API detects the failure!
 
-# Reiniciar o banco
+# Restart the database
 docker start postgres-externo
 
-# Testar novamente
+# Test again
 curl http://localhost:30002/health
-# → {"status": "healthy", "database": "connected"} ← Reconexão automática!
+# → {"status": "healthy", "database": "connected"} ← Automatic reconnection!
 
-# Os dados persistiram?
+# Did the data persist?
 curl http://localhost:30002/alunos | python3 -m json.tool
-# → Todos os alunos ainda estão lá (incluindo "Kubernetes Aluno") ✅
+# → All students are still there (including "Kubernetes Aluno") ✅
 ```
 
 ---
 
-## 🧹 Limpeza
+## 🧹 Cleanup
 
 ```bash
-# Remover TODOS os recursos do namespace fullstack
+# Remove ALL resources from the fullstack namespace
 kubectl delete namespace fullstack
-# → Isso remove: Deployment, Service, Secret, Pods — tudo!
+# → This removes: Deployment, Service, Secret, Pods — everything!
 
-# Remover o PostgreSQL externo
+# Remove the external PostgreSQL
 docker rm -f postgres-externo
 
-# Verificar
+# Verify
 kubectl get all -n fullstack
 # → "No resources found" ✅
 ```
 
 ---
 
-## ✅ O que aprendemos
+## ✅ What we learned
 
-| Conceito | O que fizemos |
+| Concept | What we did |
 |---|---|
-| **PostgreSQL externo** | Banco rodando fora do cluster (padrão de produção) |
-| **Namespace** | Isolamento lógico de recursos (`fullstack`) |
-| **Secret** | Credenciais do banco armazenadas de forma segura |
-| **ExternalName Service** | DNS alias dentro do K8s para serviço externo |
-| **Separação stateless/stateful** | API escala no K8s, banco fica protegido fora |
-| **Resiliência** | Pods morrem e recriam sem perder dados do banco |
-| **pgAdmin** | Interface visual para gerenciar o banco de dentro do cluster |
+| **External PostgreSQL** | Database running outside the cluster (production pattern) |
+| **Namespace** | Logical resource isolation (`fullstack`) |
+| **Secret** | Database credentials securely stored |
+| **ExternalName Service** | DNS alias inside K8s for external services |
+| **Stateless/stateful separation** | API scales on K8s, database stays protected outside |
+| **Resilience** | Pods die and recreate without losing database data |
+| **pgAdmin** | Visual interface to manage the database from inside the cluster |
 
 ---
 
-**Próximo:** [Lab 04 — Spark on K8s](../lab-04-spark-on-k8s/README.md) →
+**Next:** [Lab 04 — Spark on K8s](../lab-04-spark-on-k8s/README.md) →

@@ -1,72 +1,72 @@
-# 🧪 Lab 02 — Deployments na Prática
+# 🧪 Lab 02 — Deployments in Practice
 
-> **Objetivo:** Criar Deployments, escalar réplicas, realizar rolling updates e rollbacks. Este lab demonstra por que Deployments são o recurso mais importante do K8s para aplicações stateless.
+> **Objective:** Create Deployments, scale replicas, perform rolling updates and rollbacks. This lab demonstrates why Deployments are the most important K8s resource for stateless applications.
 
-> **Pré-requisito:** Cluster `k8s-lab` rodando (Lab 01). Docker instalado.
+> **Prerequisite:** `k8s-lab` cluster running (Lab 01). Docker installed.
 
-> **Tempo estimado:** 30 minutos
-
----
-
-## 📋 O que você vai praticar
-
-- [x] Construir uma imagem Docker e carregá-la no cluster kind
-- [x] Criar um Deployment com 3 réplicas
-- [x] Testar auto-healing (deletar Pods e ver recriação)
-- [x] Escalar réplicas manualmente
-- [x] Expor o Deployment via Service NodePort
-- [x] Realizar rolling update (atualizar versão da API)
-- [x] Fazer rollback para versão anterior
+> **Estimated time:** 30 minutes
 
 ---
 
-## 🔬 Exercício 1: Preparação — Build da Imagem
+## 📋 What you will practice
 
-### Passo 1 — Construir a imagem Docker da API
+- [x] Build a Docker image and load it into the kind cluster
+- [x] Create a Deployment with 3 replicas
+- [x] Test auto-healing (delete Pods and watch recreation)
+- [x] Scale replicas manually
+- [x] Expose the Deployment via a NodePort Service
+- [x] Perform a rolling update (update API version)
+- [x] Rollback to the previous version
+
+---
+
+## 🔬 Exercise 1: Preparation — Build the Image
+
+### Step 1 — Build the API Docker image
 
 ```bash
-# A partir da raiz do cdn-k8s-lab
+# From the root of cdn-k8s-lab
 cd labs/lab-02-deployments/app
 
-# Construir a imagem versão 1.0
+# Build the image version 1.0
 docker build -t api-vendas:1.0 .
 # → Successfully tagged api-vendas:1.0
 ```
 
-### Passo 2 — Carregar a imagem no cluster kind
+### Step 2 — Load the image into the kind cluster
 
-O kind usa seu próprio registro de imagens. Precisamos **carregar** a imagem local para dentro do cluster:
+kind uses its own image registry. We need to **load** the local image into the cluster:
 
 ```bash
-# Carregar imagem para o cluster kind
+# Load image into the kind cluster
 kind load docker-image api-vendas:1.0 --name k8s-lab
 # → Image: "api-vendas:1.0" with ID "sha256:..." loaded
 ```
 
-> 💡 **Por que isso é necessário?** O cluster kind roda dentro de contêineres Docker. Ele não tem acesso direto às imagens do Docker Engine do seu host. O comando `kind load` copia a imagem para dentro dos nós do cluster.
+> 💡 **Why is this necessary?** The kind cluster runs inside Docker containers. It doesn't have direct access to images on your host Docker Engine. The `kind load` command copies the image into the cluster nodes.
 
-### Passo 3 — Verificar
+### Step 3 — Verify
 
 ```bash
-# Voltar para a raiz do lab
+# Go back to the lab root
 cd ../../..
 ```
 
 ---
 
-## 🔬 Exercício 2: Primeiro Deployment
+## 🔬 Exercise 2: First Deployment
 
-### Passo 1 — Criar o Deployment
+### Step 1 — Create the Deployment
 
 ```bash
 kubectl apply -f labs/lab-02-deployments/manifests/api-deployment.yaml
 # → deployment.apps/api-vendas created
 ```
 
-### Passo 2 — Observar a criação em tempo real
+### Step 2 — Watch the creation in real time
 
 ```bash
-# Em um terminal separado, observe os Pods sendo criados:
+# In a separate terminal, watch the Pods being created:
 kubectl get pods --watch
 # → NAME                         READY   STATUS              RESTARTS   AGE
 # → api-vendas-7d8f9b6c5-abc12   0/1     ContainerCreating   0          1s
@@ -75,10 +75,10 @@ kubectl get pods --watch
 # → api-vendas-7d8f9b6c5-abc12   1/1     Running             0          3s
 # → api-vendas-7d8f9b6c5-def34   1/1     Running             0          4s
 # → api-vendas-7d8f9b6c5-ghi56   1/1     Running             0          4s
-# Ctrl+C para parar
+# Ctrl+C to stop
 ```
 
-### Passo 3 — Inspecionar a hierarquia
+### Step 3 — Inspect the hierarchy
 
 ```bash
 # Deployment
@@ -86,78 +86,78 @@ kubectl get deployments
 # → NAME         READY   UP-TO-DATE   AVAILABLE   AGE
 # → api-vendas   3/3     3            3           30s
 
-# ReplicaSet (criado automaticamente pelo Deployment)
+# ReplicaSet (created automatically by the Deployment)
 kubectl get replicasets
 # → NAME                    DESIRED   CURRENT   READY   AGE
 # → api-vendas-7d8f9b6c5   3         3         3       30s
 
-# Pods (criados automaticamente pelo ReplicaSet)
+# Pods (created automatically by the ReplicaSet)
 kubectl get pods -o wide
-# → Observe: os Pods estão distribuídos entre os Worker Nodes!
+# → Observe: the Pods are distributed across the Worker Nodes!
 ```
 
-> 🧠 **Hierarquia:** Deployment → ReplicaSet → Pods. Você criou apenas o Deployment, e ele criou o resto automaticamente!
+> 🧠 **Hierarchy:** Deployment → ReplicaSet → Pods. You only created the Deployment, and it created everything else automatically!
 
 ---
 
-## 🔬 Exercício 3: Auto-Healing
+## 🔬 Exercise 3: Auto-Healing
 
-### Passo 1 — Deletar um Pod e observar
+### Step 1 — Delete a Pod and observe
 
 ```bash
-# Pegar o nome de um dos Pods
+# Get the name of one of the Pods
 POD_NAME=$(kubectl get pods -l app=api-vendas -o jsonpath='{.items[0].metadata.name}')
 
-# Deletar o Pod
+# Delete the Pod
 kubectl delete pod $POD_NAME
 # → pod "api-vendas-7d8f9b6c5-abc12" deleted
 
-# IMEDIATAMENTE verificar:
+# IMMEDIATELY check:
 kubectl get pods
-# → Um novo Pod está sendo criado! 🎉
+# → A new Pod is being created! 🎉
 # → api-vendas-7d8f9b6c5-xyz99   0/1   ContainerCreating   0   2s
 # → api-vendas-7d8f9b6c5-def34   1/1   Running             0   2m
 # → api-vendas-7d8f9b6c5-ghi56   1/1   Running             0   2m
 ```
 
-> 💡 **Isso é auto-healing!** O ReplicaSet percebeu que havia 2 Pods (desejado: 3) e criou um novo automaticamente. Sem intervenção humana.
+> 💡 **This is auto-healing!** The ReplicaSet noticed there were 2 Pods (desired: 3) and created a new one automatically. No human intervention.
 
-### Passo 2 — Testar resiliência extrema
+### Step 2 — Test extreme resilience
 
 ```bash
-# Deletar TODOS os Pods de uma vez!
+# Delete ALL Pods at once!
 kubectl delete pods -l app=api-vendas
 
-# Verificar imediatamente
+# Check immediately
 kubectl get pods --watch
-# → Todos sendo recriados automaticamente! O K8s SEMPRE mantém 3 réplicas.
+# → All being recreated automatically! K8s ALWAYS maintains 3 replicas.
 ```
 
 ---
 
-## 🔬 Exercício 4: Scaling
+## 🔬 Exercise 4: Scaling
 
-### Passo 1 — Escalar para 5 réplicas
+### Step 1 — Scale to 5 replicas
 
 ```bash
 kubectl scale deployment api-vendas --replicas=5
 
-# Verificar
+# Verify
 kubectl get pods
-# → Agora há 5 Pods!
+# → Now there are 5 Pods!
 ```
 
-### Passo 2 — Reduzir para 2 réplicas
+### Step 2 — Reduce to 2 replicas
 
 ```bash
 kubectl scale deployment api-vendas --replicas=2
 
-# Verificar: Pods excedentes sendo terminados
+# Verify: excess Pods being terminated
 kubectl get pods --watch
-# → 3 Pods em estado "Terminating"
+# → 3 Pods in "Terminating" state
 ```
 
-### Passo 3 — Voltar para 3 réplicas
+### Step 3 — Back to 3 replicas
 
 ```bash
 kubectl scale deployment api-vendas --replicas=3
@@ -165,16 +165,16 @@ kubectl scale deployment api-vendas --replicas=3
 
 ---
 
-## 🔬 Exercício 5: Service — Expondo a API
+## 🔬 Exercise 5: Service — Exposing the API
 
-### Passo 1 — Criar o Service
+### Step 1 — Create the Service
 
 ```bash
 kubectl apply -f labs/lab-02-deployments/manifests/api-service.yaml
 # → service/api-vendas created
 ```
 
-### Passo 2 — Verificar
+### Step 2 — Verify
 
 ```bash
 kubectl get services
@@ -182,25 +182,25 @@ kubectl get services
 # → api-vendas   NodePort   10.96.xx.xx    80:30001/TCP   5s
 ```
 
-### Passo 3 — Acessar a API
+### Step 3 — Access the API
 
 ```bash
-# Acessar via NodePort
+# Access via NodePort
 curl http://localhost:30001
 # → {"app":"API de Vendas","hostname":"api-vendas-7d8f9b6c5-abc12","version":"1.0",...}
 
-# Chamar várias vezes — observe o hostname mudando!
+# Call multiple times — notice the hostname changing!
 for i in {1..6}; do curl -s http://localhost:30001 | python3 -m json.tool | grep hostname; done
 # → "hostname": "api-vendas-7d8f9b6c5-abc12"
-# → "hostname": "api-vendas-7d8f9b6c5-def34"  ← Pod diferente!
-# → "hostname": "api-vendas-7d8f9b6c5-ghi56"  ← Outro Pod!
+# → "hostname": "api-vendas-7d8f9b6c5-def34"  ← Different Pod!
+# → "hostname": "api-vendas-7d8f9b6c5-ghi56"  ← Another Pod!
 # → "hostname": "api-vendas-7d8f9b6c5-abc12"
 # → ...
 ```
 
-> 🧠 **Load Balancing!** O Service distribui as requisições entre os 3 Pods automaticamente (round-robin). Cada resposta vem de um Pod diferente!
+> 🧠 **Load Balancing!** The Service distributes requests across the 3 Pods automatically (round-robin). Each response comes from a different Pod!
 
-### Passo 4 — Ver dados de vendas
+### Step 4 — View sales data
 
 ```bash
 curl http://localhost:30001/vendas | python3 -m json.tool
@@ -212,19 +212,19 @@ curl http://localhost:30001/health | python3 -m json.tool
 
 ---
 
-## 🔬 Exercício 6: Rolling Update
+## 🔬 Exercise 6: Rolling Update
 
-Vamos atualizar a API da versão 1.0 para 2.0 **sem downtime**!
+Let's update the API from version 1.0 to 2.0 **without downtime**!
 
-### Passo 1 — Construir versão 2.0
+### Step 1 — Build version 2.0
 
-Edite o arquivo `labs/lab-02-deployments/app/app.py` e altere a variável `VERSION`:
+Edit the file `labs/lab-02-deployments/app/app.py` and change the `VERSION` variable:
 
 ```python
-VERSION = os.environ.get("APP_VERSION", "2.0")  # ← Mudar de 1.0 para 2.0
+VERSION = os.environ.get("APP_VERSION", "2.0")  # ← Change from 1.0 to 2.0
 ```
 
-E adicione um novo endpoint:
+And add a new endpoint:
 
 ```python
 @app.route("/v2/info")
@@ -233,41 +233,41 @@ def info_v2():
 ```
 
 ```bash
-# Reconstruir com nova tag
+# Rebuild with new tag
 cd labs/lab-02-deployments/app
 docker build -t api-vendas:2.0 .
 
-# Carregar no cluster
+# Load into the cluster
 kind load docker-image api-vendas:2.0 --name k8s-lab
 
 cd ../../..
 ```
 
-### Passo 2 — Disparar rolling update
+### Step 2 — Trigger rolling update
 
 ```bash
-# Em um terminal, observe os Pods:
+# In one terminal, watch the Pods:
 kubectl get pods --watch
 
-# Em outro terminal, atualize a imagem:
+# In another terminal, update the image:
 kubectl set image deployment/api-vendas api=api-vendas:2.0
 ```
 
-### Passo 3 — Observar o rolling update
+### Step 3 — Observe the rolling update
 
 ```bash
-# Status da atualização
+# Update status
 kubectl rollout status deployment api-vendas
 # → Waiting for rollout to finish: 1 out of 3 new replicas have been updated...
 # → Waiting for rollout to finish: 2 out of 3 new replicas have been updated...
 # → deployment "api-vendas" successfully rolled out ✅
 
-# Verificar a versão
+# Verify the version
 curl http://localhost:30001 | python3 -m json.tool
-# → "version": "2.0" ← Atualizado!
+# → "version": "2.0" ← Updated!
 ```
 
-### Passo 4 — Ver o histórico
+### Step 4 — View the history
 
 ```bash
 kubectl rollout history deployment api-vendas
@@ -278,72 +278,72 @@ kubectl rollout history deployment api-vendas
 
 ---
 
-## 🔬 Exercício 7: Rollback
+## 🔬 Exercise 7: Rollback
 
-Ops! A versão 2.0 tem um bug. Vamos reverter para 1.0:
+Oops! Version 2.0 has a bug. Let's revert to 1.0:
 
-### Passo 1 — Executar rollback
+### Step 1 — Execute rollback
 
 ```bash
 kubectl rollout undo deployment api-vendas
 # → deployment.apps/api-vendas rolled back
 ```
 
-### Passo 2 — Verificar
+### Step 2 — Verify
 
 ```bash
-# Aguardar rollback completar
+# Wait for rollback to complete
 kubectl rollout status deployment api-vendas
 
-# Testar
+# Test
 curl http://localhost:30001 | python3 -m json.tool
-# → "version": "1.0" ← De volta à versão 1.0! 🎉
+# → "version": "1.0" ← Back to version 1.0! 🎉
 ```
 
-> 💡 **Como funciona:** O K8s mantém os ReplicaSets antigos (com 0 réplicas). No rollback, ele escala o ReplicaSet antigo de volta. Os Pods da versão 2.0 são terminados e os da 1.0 são recriados. Tudo automático!
+> 💡 **How it works:** K8s keeps the old ReplicaSets (with 0 replicas). On rollback, it scales the old ReplicaSet back up. Pods from version 2.0 are terminated and those from 1.0 are recreated. All automatic!
 
 ```bash
-# Verificar: dois ReplicaSets existem
+# Verify: two ReplicaSets exist
 kubectl get replicasets
 # → NAME                    DESIRED   CURRENT   READY
-# → api-vendas-7d8f9b6c5   3         3         3     ← v1.0 (ativo)
-# → api-vendas-a1b2c3d4e   0         0         0     ← v2.0 (inativo)
+# → api-vendas-7d8f9b6c5   3         3         3     ← v1.0 (active)
+# → api-vendas-a1b2c3d4e   0         0         0     ← v2.0 (inactive)
 ```
 
 ---
 
-## 🧹 Limpeza
+## 🧹 Cleanup
 
 ```bash
-# Remover Deployment e Service
+# Remove Deployment and Service
 kubectl delete -f labs/lab-02-deployments/manifests/
 
-# Verificar
+# Verify
 kubectl get all
-# → Apenas os serviços de sistema
+# → Only system services
 
-# (Opcional) Remover imagens
+# (Optional) Remove images
 docker rmi api-vendas:1.0 api-vendas:2.0
 ```
 
 ---
 
-## ✅ O que aprendemos
+## ✅ What we learned
 
-| Conceito | Comando |
+| Concept | Command |
 |---|---|
-| Build + load para kind | `docker build -t img:tag .` + `kind load docker-image img:tag` |
-| Criar Deployment | `kubectl apply -f deployment.yaml` |
-| Ver hierarquia | `kubectl get deploy,rs,pods` |
-| Auto-healing | Deletar Pod → K8s recria automaticamente |
-| Escalar | `kubectl scale deployment app --replicas=N` |
-| Expor via Service | `kubectl apply -f service.yaml` (NodePort) |
-| Load balancing | Service distribui tráfego entre Pods |
-| Rolling update | `kubectl set image deployment/app container=img:nova-tag` |
-| Ver rollout | `kubectl rollout status deployment app` |
+| Build + load to kind | `docker build -t img:tag .` + `kind load docker-image img:tag` |
+| Create Deployment | `kubectl apply -f deployment.yaml` |
+| View hierarchy | `kubectl get deploy,rs,pods` |
+| Auto-healing | Delete Pod → K8s recreates automatically |
+| Scale | `kubectl scale deployment app --replicas=N` |
+| Expose via Service | `kubectl apply -f service.yaml` (NodePort) |
+| Load balancing | Service distributes traffic across Pods |
+| Rolling update | `kubectl set image deployment/app container=img:new-tag` |
+| View rollout | `kubectl rollout status deployment app` |
 | Rollback | `kubectl rollout undo deployment app` |
-| Histórico | `kubectl rollout history deployment app` |
+| History | `kubectl rollout history deployment app` |
 
 ---
 
-**Próximo:** [Lab 03 — App Fullstack (K8s + Banco Externo)](../lab-03-app-fullstack/README.md) →
+**Next:** [Lab 03 — Fullstack App (K8s + External DB)](../lab-03-app-fullstack/README.md) →

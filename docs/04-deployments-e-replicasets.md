@@ -1,87 +1,87 @@
-# 📖 04 — Deployments e ReplicaSets
+# 📖 04 — Deployments and ReplicaSets
 
-> **Objetivo:** Entender por que nunca criamos Pods "soltos" em produção, e como Deployments gerenciam réplicas, atualizações e rollbacks automaticamente. Ao final, você dominará o recurso mais importante do K8s para aplicações stateless.
+> **Objective:** Understand why we never create "loose" Pods in production, and how Deployments manage replicas, updates, and rollbacks automatically. By the end, you'll master the most important K8s resource for stateless applications.
 
 ---
 
-## 🤔 Por que Não Usar Pods Diretamente?
+## 🤔 Why Not Use Pods Directly?
 
-No módulo anterior, criamos Pods com `kubectl run` e `kubectl apply`. Mas Pods "soltos" têm um problema fatal:
+In the previous module, we created Pods with `kubectl run` and `kubectl apply`. But "loose" Pods have a fatal problem:
 
 ```bash
-# Criar um Pod
+# Create a Pod
 kubectl run minha-api --image=python:3.12-slim
 
-# Simular uma falha: deletar o Pod
+# Simulate a failure: delete the Pod
 kubectl delete pod minha-api
 
-# Verificar
+# Verify
 kubectl get pods
-# → Nenhum Pod! 😱 O K8s não recriou automaticamente.
+# → No Pods! 😱 K8s did not recreate it automatically.
 ```
 
-**Pods soltos não têm auto-healing!** Quando morrem, morrem para sempre.
+**Loose Pods have no auto-healing!** When they die, they're gone forever.
 
-> 💡 **Regra de ouro:** Nunca crie Pods diretamente em produção. Use **Deployments** — eles garantem que seus Pods são recriados automaticamente.
+> 💡 **Golden rule:** Never create Pods directly in production. Use **Deployments** — they guarantee your Pods are recreated automatically.
 
 ---
 
-## 🔄 ReplicaSet: Garantindo N Réplicas
+## 🔄 ReplicaSet: Guaranteeing N Replicas
 
-O **ReplicaSet** é o recurso que garante que um número específico de Pods idênticos esteja sempre rodando:
+The **ReplicaSet** is the resource that ensures a specific number of identical Pods is always running:
 
 ```
 ┌──────────────────────────────────────────────────┐
 │              ReplicaSet (replicas: 3)             │
 │                                                  │
-│  "Eu garanto que SEMPRE haverá 3 Pods ativos"    │
+│  "I guarantee there will ALWAYS be 3 active Pods" │
 │                                                  │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
 │  │  Pod #1  │  │  Pod #2  │  │  Pod #3  │       │
 │  │  nginx   │  │  nginx   │  │  nginx   │       │
 │  └──────────┘  └──────────┘  └──────────┘       │
 │                                                  │
-│  Se Pod #2 morrer → cria Pod #4 automaticamente  │
+│  If Pod #2 dies → creates Pod #4 automatically   │
 └──────────────────────────────────────────────────┘
 ```
 
-Na prática, **você nunca cria ReplicaSets diretamente** — o Deployment faz isso por você. Mas é importante entender que o Deployment gerencia ReplicaSets, que por sua vez gerenciam Pods:
+In practice, **you never create ReplicaSets directly** — the Deployment does that for you. But it's important to understand that the Deployment manages ReplicaSets, which in turn manage Pods:
 
 ```
-Deployment → cria → ReplicaSet → cria → Pod, Pod, Pod
+Deployment → creates → ReplicaSet → creates → Pod, Pod, Pod
 ```
 
 ---
 
-## 🚀 Deployment: O Recurso Principal
+## 🚀 Deployment: The Main Resource
 
-O **Deployment** é o recurso mais usado no Kubernetes. Ele gerencia ReplicaSets e adiciona:
-- ✅ Rolling updates (atualizar sem downtime)
-- ✅ Rollback (voltar à versão anterior)
-- ✅ Scaling (aumentar/diminuir réplicas)
-- ✅ Auto-healing (recria Pods que falham)
+The **Deployment** is the most used resource in Kubernetes. It manages ReplicaSets and adds:
+- ✅ Rolling updates (update without downtime)
+- ✅ Rollback (revert to a previous version)
+- ✅ Scaling (increase/decrease replicas)
+- ✅ Auto-healing (recreates Pods that fail)
 
-### Anatomia de um Deployment
+### Anatomy of a Deployment
 
 ```yaml
 # deployment-api.yaml
-apiVersion: apps/v1           # API do grupo "apps" versão 1
-kind: Deployment              # Tipo: Deployment
+apiVersion: apps/v1           # API group "apps" version 1
+kind: Deployment              # Type: Deployment
 metadata:
-  name: api-vendas            # Nome do Deployment
+  name: api-vendas            # Deployment name
   labels:
     app: api-vendas
 spec:
-  replicas: 3                 # Manter 3 Pods sempre ativos
+  replicas: 3                 # Keep 3 Pods always active
 
-  selector:                   # Como o Deployment encontra seus Pods
+  selector:                   # How the Deployment finds its Pods
     matchLabels:
-      app: api-vendas         # "Gerencio todos os Pods com label app=api-vendas"
+      app: api-vendas         # "I manage all Pods with label app=api-vendas"
 
-  template:                   # Template do Pod (como cada Pod será criado)
+  template:                   # Pod template (how each Pod will be created)
     metadata:
       labels:
-        app: api-vendas       # ⚠️ DEVE coincidir com o selector acima!
+        app: api-vendas       # ⚠️ MUST match the selector above!
     spec:
       containers:
       - name: api
@@ -97,7 +97,7 @@ spec:
             cpu: "200m"
 ```
 
-### Hierarquia de recursos
+### Resource hierarchy
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -119,117 +119,117 @@ spec:
 
 ---
 
-## ⚙️ Comandos Essenciais para Deployments
+## ⚙️ Essential Commands for Deployments
 
 ```bash
-# ── Criar / Atualizar ──
-kubectl apply -f deployment-api.yaml            # Criar ou atualizar
+# ── Create / Update ──
+kubectl apply -f deployment-api.yaml            # Create or update
 
-# ── Consultar ──
-kubectl get deployments                          # Listar Deployments
-kubectl get rs                                   # Listar ReplicaSets
-kubectl get pods                                 # Listar Pods criados
-kubectl describe deployment api-vendas           # Detalhes completos
+# ── Query ──
+kubectl get deployments                          # List Deployments
+kubectl get rs                                   # List ReplicaSets
+kubectl get pods                                 # List created Pods
+kubectl describe deployment api-vendas           # Full details
 
-# ── Escalar ──
-kubectl scale deployment api-vendas --replicas=5  # Escalar para 5 réplicas
-kubectl scale deployment api-vendas --replicas=1  # Reduzir para 1 réplica
+# ── Scale ──
+kubectl scale deployment api-vendas --replicas=5  # Scale to 5 replicas
+kubectl scale deployment api-vendas --replicas=1  # Scale down to 1 replica
 
-# ── Atualizar imagem ──
+# ── Update image ──
 kubectl set image deployment/api-vendas \
-  api=python:3.13-slim                           # Atualizar versão da imagem
+  api=python:3.13-slim                           # Update image version
 
-# ── Rollout (status e histórico) ──
-kubectl rollout status deployment api-vendas     # Ver progresso da atualização
-kubectl rollout history deployment api-vendas    # Ver histórico de versões
+# ── Rollout (status and history) ──
+kubectl rollout status deployment api-vendas     # Check update progress
+kubectl rollout history deployment api-vendas    # View version history
 
 # ── Rollback ──
-kubectl rollout undo deployment api-vendas       # Voltar à versão anterior
+kubectl rollout undo deployment api-vendas       # Revert to previous version
 kubectl rollout undo deployment api-vendas \
-  --to-revision=2                                # Voltar a uma revisão específica
+  --to-revision=2                                # Revert to a specific revision
 
-# ── Deletar ──
+# ── Delete ──
 kubectl delete deployment api-vendas             # Remove Deployment + RS + Pods
-kubectl delete -f deployment-api.yaml            # Remove via arquivo
+kubectl delete -f deployment-api.yaml            # Remove via file
 ```
 
 ---
 
-## 🔄 Rolling Update: Atualização Sem Downtime
+## 🔄 Rolling Update: Zero-Downtime Update
 
-Quando você atualiza a imagem de um Deployment, o K8s faz uma **atualização gradual** (rolling update):
-
-```
-Estado inicial: 3 Pods com imagem v1
-                                                    
-Passo 1: Cria 1 Pod v2, mantém 3 v1         (4 Pods total)
-Passo 2: Pod v2 está Ready → Remove 1 v1    (3 Pods total)
-Passo 3: Cria outro Pod v2, mantém 2 v1     (4 Pods total)
-Passo 4: Pod v2 está Ready → Remove 1 v1    (3 Pods total)
-Passo 5: Cria último Pod v2, mantém 1 v1    (4 Pods total)
-Passo 6: Pod v2 está Ready → Remove último v1 (3 Pods total)
-
-Estado final: 3 Pods com imagem v2 ✅
-```
+When you update a Deployment's image, K8s performs a **gradual update** (rolling update):
 
 ```
-v1 ████████████████████░░░░░░░░░░ → morrendo gradualmente
-v2 ░░░░░░░░░░████████████████████ → nascendo gradualmente
+Initial state: 3 Pods with image v1
 
-Usuários NUNCA ficam sem serviço! Sempre há Pods respondendo.
+Step 1: Creates 1 Pod v2, keeps 3 v1         (4 Pods total)
+Step 2: Pod v2 is Ready → Removes 1 v1       (3 Pods total)
+Step 3: Creates another Pod v2, keeps 2 v1    (4 Pods total)
+Step 4: Pod v2 is Ready → Removes 1 v1       (3 Pods total)
+Step 5: Creates last Pod v2, keeps 1 v1      (4 Pods total)
+Step 6: Pod v2 is Ready → Removes last v1    (3 Pods total)
+
+Final state: 3 Pods with image v2 ✅
 ```
 
-### Configurando a estratégia
+```
+v1 ████████████████████░░░░░░░░░░ → gradually dying
+v2 ░░░░░░░░░░████████████████████ → gradually being born
+
+Users NEVER go without service! There are always Pods responding.
+```
+
+### Configuring the strategy
 
 ```yaml
 spec:
   strategy:
-    type: RollingUpdate       # Padrão — atualiza gradualmente
+    type: RollingUpdate       # Default — updates gradually
     rollingUpdate:
-      maxSurge: 1             # Máximo de Pods extras durante a atualização
-      maxUnavailable: 0       # Nenhum Pod pode ficar indisponível
+      maxSurge: 1             # Maximum extra Pods during the update
+      maxUnavailable: 0       # No Pod can be unavailable
 ```
 
-| Estratégia | Comportamento | Quando usar |
+| Strategy | Behavior | When to use |
 |---|---|---|
-| **RollingUpdate** (padrão) | Atualiza gradualmente, sem downtime | Maioria dos casos |
-| **Recreate** | Mata todos os Pods v1, depois cria todos v2 | Quando v1 e v2 não podem coexistir |
+| **RollingUpdate** (default) | Updates gradually, without downtime | Most cases |
+| **Recreate** | Kills all v1 Pods, then creates all v2 | When v1 and v2 cannot coexist |
 
 ---
 
-## ↩️ Rollback: Voltando Atrás
+## ↩️ Rollback: Going Back
 
-Fez um deploy de uma versão com bug? Rollback em segundos:
+Deployed a buggy version? Rollback in seconds:
 
 ```bash
-# Ver histórico de revisões
+# View revision history
 kubectl rollout history deployment api-vendas
 # → REVISION  CHANGE-CAUSE
 # → 1         <none>
 # → 2         <none>
 # → 3         <none>
 
-# Voltar à revisão anterior (2 → 1 passo atrás)
+# Revert to previous revision (2 → 1 step back)
 kubectl rollout undo deployment api-vendas
 
-# Voltar a uma revisão específica
+# Revert to a specific revision
 kubectl rollout undo deployment api-vendas --to-revision=1
 
-# Verificar que o rollback foi aplicado
+# Verify the rollback was applied
 kubectl rollout status deployment api-vendas
 ```
 
-> 💡 **Como funciona:** O K8s mantém os ReplicaSets antigos (com réplicas=0). No rollback, ele simplesmente escala o ReplicaSet antigo de volta e escala o novo para zero. Rápido e seguro.
+> 💡 **How it works:** K8s keeps old ReplicaSets (with replicas=0). On rollback, it simply scales the old ReplicaSet back up and scales the new one down to zero. Fast and safe.
 
 ---
 
 ## 📈 Horizontal Pod Autoscaler (HPA)
 
-O HPA escala o número de réplicas **automaticamente** com base em métricas:
+The HPA **automatically** scales the number of replicas based on metrics:
 
 ```bash
-# Escalar automaticamente entre 2 e 10 réplicas,
-# mantendo o uso médio de CPU em 50%
+# Auto-scale between 2 and 10 replicas,
+# keeping the average CPU usage at 50%
 kubectl autoscale deployment api-vendas \
   --min=2 \
   --max=10 \
@@ -237,34 +237,34 @@ kubectl autoscale deployment api-vendas \
 ```
 
 ```
-                    Uso de CPU
+                    CPU Usage
                         │
-     Alta demanda ──►   │  ████████ 80%  → HPA: escalar para 8 réplicas
+     High demand ──►   │  ████████ 80%  → HPA: scale to 8 replicas
                         │  ████████
-     Demanda normal ──► │  ████     50%  → HPA: manter 5 réplicas
+     Normal demand ──►  │  ████     50%  → HPA: keep 5 replicas
                         │  ████
-     Baixa demanda ──►  │  ██       20%  → HPA: reduzir para 2 réplicas
+     Low demand ──►     │  ██       20%  → HPA: scale down to 2 replicas
                         │  ██
                         └──────────────
-                          Réplicas
+                          Replicas
 ```
 
-> ⚠️ **Pré-requisito:** O HPA precisa do **Metrics Server** instalado no cluster para ler métricas de CPU e memória dos Pods.
+> ⚠️ **Prerequisite:** HPA needs the **Metrics Server** installed in the cluster to read Pod CPU and memory metrics.
 
 ---
 
-## 📝 Resumo
+## 📝 Summary
 
-| Conceito | Definição |
+| Concept | Definition |
 |---|---|
-| **Deployment** | Gerencia ReplicaSets e Pods. Recurso principal para aplicações stateless |
-| **ReplicaSet** | Garante N réplicas de um Pod sempre ativas. Criado automaticamente pelo Deployment |
-| **Rolling Update** | Atualização gradual da imagem, sem downtime |
-| **Rollback** | Reverter para uma versão anterior do Deployment |
-| **Scaling** | Aumentar/diminuir réplicas manualmente ou via HPA |
-| **HPA** | Horizontal Pod Autoscaler — escala réplicas com base em métricas (CPU, memória) |
-| **Strategy** | RollingUpdate (gradual, sem downtime) ou Recreate (mata tudo, recria tudo) |
+| **Deployment** | Manages ReplicaSets and Pods. Main resource for stateless applications |
+| **ReplicaSet** | Ensures N replicas of a Pod are always active. Created automatically by the Deployment |
+| **Rolling Update** | Gradual image update, without downtime |
+| **Rollback** | Revert to a previous Deployment version |
+| **Scaling** | Increase/decrease replicas manually or via HPA |
+| **HPA** | Horizontal Pod Autoscaler — scales replicas based on metrics (CPU, memory) |
+| **Strategy** | RollingUpdate (gradual, no downtime) or Recreate (kill all, recreate all) |
 
 ---
 
-**Próximo:** [05 — Services e Networking](05-services-e-networking.md) →
+**Next:** [05 — Services and Networking](05-services-e-networking.md) →

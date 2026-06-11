@@ -1,5 +1,5 @@
-# Deployment da API Escola
-# Conecta ao PostgreSQL externo via Service ExternalName
+# School API Deployment
+# Connects to external PostgreSQL via ExternalName Service
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,14 +23,14 @@ spec:
         ports:
         - containerPort: 8000
         env:
-        # Configuração do banco (não-sensível) — direto no YAML
+        # DB config (non-sensitive) — directly in YAML
         - name: DB_HOST
-          value: "host.docker.internal"     # Aponta para o PostgreSQL externo
+          value: "host.docker.internal"     # Points to external PostgreSQL
         - name: DB_PORT
           value: "5432"
         - name: DB_NAME
           value: "escola"
-        # Credenciais (sensíveis) — injetadas do Secret
+        # Credentials (sensitive) — injected from Secret
         - name: DB_USER
           valueFrom:
             secretKeyRef:

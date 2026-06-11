@@ -1,17 +1,17 @@
-# RBAC — permissões para o Spark criar/gerenciar Pods de Executor
+# RBAC — permissions for Spark to create/manage Executor Pods
 #
-# Quando o Spark roda no modo "client" ou "cluster" no K8s,
-# o Driver precisa de permissão para criar e monitorar os Pods
-# dos Executors no namespace spark.
+# When Spark runs in "client" or "cluster" mode on K8s,
+# the Driver needs permission to create and monitor Executor
+# Pods in the spark namespace.
 
-# ServiceAccount dedicada para o Spark
+# Dedicated ServiceAccount for Spark
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: spark
   namespace: spark
 ---
-# Role com permissões necessárias
+# Role with required permissions
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -22,7 +22,7 @@ rules:
   resources: ["pods", "pods/log", "services", "configmaps", "persistentvolumeclaims"]
   verbs: ["get", "list", "watch", "create", "delete", "update", "patch"]
 ---
-# Binding: associa a Role ao ServiceAccount
+# Binding: associates the Role to the ServiceAccount
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:

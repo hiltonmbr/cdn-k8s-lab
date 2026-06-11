@@ -1,36 +1,36 @@
-# 🧪 Lab 05 — Dashboard e Monitoramento Visual
+# 🧪 Lab 05 — Dashboard and Visual Monitoring
 
-> **Objetivo:** Instalar e explorar ferramentas visuais para monitorar o cluster Kubernetes — o Dashboard web oficial e o k9s (TUI terminal). Visualizar Pods, Deployments, consumo de recursos e eventos do cluster em tempo real.
+> **Objective:** Install and explore visual tools to monitor the Kubernetes cluster — the official web Dashboard and k9s (terminal TUI). Visualize Pods, Deployments, resource consumption, and cluster events in real time.
 
-> **Pré-requisito:** Cluster `k8s-lab` rodando (Lab 01). k9s instalado (opcional, mas recomendado).
+> **Prerequisite:** `k8s-lab` cluster running (Lab 01). k9s installed (optional, but recommended).
 
-> **Tempo estimado:** 25 minutos
-
----
-
-## 📋 O que você vai praticar
-
-- [x] Instalar o Kubernetes Dashboard oficial
-- [x] Criar token de acesso seguro
-- [x] Navegar pelo Dashboard no navegador
-- [x] Explorar o k9s (interface de terminal interativa)
-- [x] Monitorar Pods, Deployments e eventos em tempo real
-- [x] Comparar ferramentas de visualização
+> **Estimated time:** 25 minutes
 
 ---
 
-## 🔬 Exercício 1: Kubernetes Dashboard
+## 📋 What you will practice
 
-O **Kubernetes Dashboard** é uma interface web oficial para gerenciar e monitorar o cluster.
+- [x] Install the official Kubernetes Dashboard
+- [x] Create a secure access token
+- [x] Navigate the Dashboard in the browser
+- [x] Explore k9s (interactive terminal interface)
+- [x] Monitor Pods, Deployments, and events in real time
+- [x] Compare visualization tools
 
-### Passo 1 — Instalar o Dashboard
+---
+
+## 🔬 Exercise 1: Kubernetes Dashboard
+
+The **Kubernetes Dashboard** is an official web interface to manage and monitor the cluster.
+
+### Step 1 — Install the Dashboard
 
 ```bash
-# Instalar o Dashboard v2 (manifests oficiais)
+# Install Dashboard v2 (official manifests)
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
 ```
 
-Saída esperada:
+Expected output:
 ```
 namespace/kubernetes-dashboard created
 serviceaccount/kubernetes-dashboard created
@@ -39,17 +39,17 @@ deployment.apps/kubernetes-dashboard created
 ...
 ```
 
-### Passo 2 — Verificar a instalação
+### Step 2 — Verify the installation
 
 ```bash
-# Ver os Pods do Dashboard
+# Check Dashboard Pods
 kubectl get pods -n kubernetes-dashboard
 # → NAME                                         READY   STATUS
 # → dashboard-metrics-scraper-xxx                1/1     Running
 # → kubernetes-dashboard-xxx                     1/1     Running
 ```
 
-### Passo 3 — Criar usuário admin para o Dashboard
+### Step 3 — Create admin user for the Dashboard
 
 ```bash
 kubectl apply -f labs/lab-05-dashboard-e-monitoring/manifests/dashboard.yaml
@@ -57,161 +57,161 @@ kubectl apply -f labs/lab-05-dashboard-e-monitoring/manifests/dashboard.yaml
 # → clusterrolebinding.rbac.authorization.k8s.io/admin-user created
 ```
 
-### Passo 4 — Gerar token de acesso
+### Step 4 — Generate access token
 
 ```bash
-# Gerar token temporário (válido por 1 hora)
+# Generate temporary token (valid for 1 hour)
 kubectl -n kubernetes-dashboard create token admin-user
-# → eyJhbGciOiJSUzI1NiIs...  ← COPIE este token!
+# → eyJhbGciOiJSUzI1NiIs...  ← COPY this token!
 ```
 
-> ⚠️ **Copie o token inteiro!** Você vai precisar dele para fazer login no Dashboard.
+> ⚠️ **Copy the entire token!** You will need it to log into the Dashboard.
 
-### Passo 5 — Acessar o Dashboard
+### Step 5 — Access the Dashboard
 
 ```bash
-# Criar proxy para acesso local
+# Create proxy for local access
 kubectl proxy
 # → Starting to serve on 127.0.0.1:8001
 ```
 
-Abra no navegador:
+Open in the browser:
 
 **http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/**
 
-1. Selecione **Token**
-2. Cole o token gerado no Passo 4
-3. Clique **Sign in**
+1. Select **Token**
+2. Paste the token generated in Step 4
+3. Click **Sign in**
 
-### Passo 6 — Explorar o Dashboard
+### Step 6 — Explore the Dashboard
 
-No Dashboard, explore:
+In the Dashboard, explore:
 
-| Seção | O que mostra |
+| Section | What it shows |
 |---|---|
-| **Cluster → Nodes** | Nós do cluster (control-plane, workers) |
-| **Workloads → Pods** | Todos os Pods em execução |
-| **Workloads → Deployments** | Deployments e seus status |
-| **Discovery → Services** | Services ativos |
-| **Config → ConfigMaps** | ConfigMaps registrados |
-| **Config → Secrets** | Secrets (conteúdo protegido) |
-| **Cluster → Events** | Eventos recentes do cluster |
+| **Cluster → Nodes** | Cluster nodes (control-plane, workers) |
+| **Workloads → Pods** | All running Pods |
+| **Workloads → Deployments** | Deployments and their status |
+| **Discovery → Services** | Active Services |
+| **Config → ConfigMaps** | Registered ConfigMaps |
+| **Config → Secrets** | Secrets (protected content) |
+| **Cluster → Events** | Recent cluster events |
 
-#### Exercício guiado no Dashboard:
+#### Guided exercise in the Dashboard:
 
-1. **Trocar namespace:** No topo, selecione "All namespaces" para ver tudo
-2. **Criar um Pod:** Clique em "+" → Cole um YAML simples de Pod → Create
-3. **Ver logs:** Clique em um Pod → ícone de "Logs" 📄
-4. **Ver eventos:** Vá em Cluster → Events para ver a timeline de atividades
+1. **Switch namespace:** At the top, select "All namespaces" to see everything
+2. **Create a Pod:** Click "+" → Paste a simple Pod YAML → Create
+3. **View logs:** Click a Pod → "Logs" icon 📄
+4. **View events:** Go to Cluster → Events to see the activity timeline
 
-> 💡 **Dica:** O Dashboard é ótimo para **visualizar** o cluster, mas prefira `kubectl` e YAMLs para **gerenciar** recursos (mais reproduzível e versionável).
+> 💡 **Tip:** The Dashboard is great for **visualizing** the cluster, but prefer `kubectl` and YAMLs for **managing** resources (more reproducible and versionable).
 
 ---
 
-## 🔬 Exercício 2: k9s — O Terminal Turbinado
+## 🔬 Exercise 2: k9s — The Turbocharged Terminal
 
-O **k9s** é uma interface de terminal (TUI) que torna a interação com o cluster muito mais produtiva do que `kubectl` puro.
+**k9s** is a terminal interface (TUI) that makes cluster interaction much more productive than plain `kubectl`.
 
-### Passo 1 — Iniciar o k9s
+### Step 1 — Start k9s
 
 ```bash
 k9s
 ```
 
-Você verá uma interface interativa no terminal com todos os Pods listados!
+You will see an interactive terminal interface with all Pods listed!
 
-### Passo 2 — Navegar entre recursos
+### Step 2 — Navigate between resources
 
-| Comando | O que faz |
+| Command | What it does |
 |---|---|
-| `:pods` + Enter | Ir para a tela de Pods |
-| `:deploy` + Enter | Ir para Deployments |
-| `:svc` + Enter | Ir para Services |
-| `:ns` + Enter | Ir para Namespaces |
-| `:nodes` + Enter | Ir para Nodes |
-| `:events` + Enter | Ver eventos do cluster |
-| `:secrets` + Enter | Ver Secrets |
+| `:pods` + Enter | Go to Pods screen |
+| `:deploy` + Enter | Go to Deployments |
+| `:svc` + Enter | Go to Services |
+| `:ns` + Enter | Go to Namespaces |
+| `:nodes` + Enter | Go to Nodes |
+| `:events` + Enter | View cluster events |
+| `:secrets` + Enter | View Secrets |
 
-### Passo 3 — Interagir com recursos
+### Step 3 — Interact with resources
 
-Selecione um recurso com as setas e use:
+Select a resource with the arrow keys and use:
 
-| Tecla | Ação |
+| Key | Action |
 |---|---|
-| **Enter** | Entrar/Selecionar |
-| **d** | Describe (detalhes completos) |
-| **l** | Logs do Pod |
-| **s** | Shell (exec -it) no Pod |
-| **Ctrl+K** | Deletar recurso selecionado |
-| **/** | Buscar/Filtrar |
-| **Esc** | Voltar |
-| **?** | Ajuda |
-| **Ctrl+C** | Sair do k9s |
+| **Enter** | Enter/Select |
+| **d** | Describe (full details) |
+| **l** | Pod logs |
+| **s** | Shell (exec -it) into the Pod |
+| **Ctrl+K** | Delete selected resource |
+| **/** | Search/Filter |
+| **Esc** | Go back |
+| **?** | Help |
+| **Ctrl+C** | Exit k9s |
 
-### Passo 4 — Exercício prático no k9s
+### Step 4 — Practical exercise in k9s
 
-1. Digite `:deploy` → Veja os Deployments
-2. Selecione um Deployment → Pressione **Enter** → Veja os Pods
-3. Selecione um Pod → Pressione **l** → Veja os logs em tempo real
-4. Pressione **Esc** → Volte
-5. Selecione um Pod → Pressione **d** → Veja o describe completo
-6. Pressione **Esc** → Volte
-7. Selecione um Pod → Pressione **s** → Abra um shell no Pod
-8. Digite `exit` para sair do shell
+1. Type `:deploy` → View Deployments
+2. Select a Deployment → Press **Enter** → View Pods
+3. Select a Pod → Press **l** → View logs in real time
+4. Press **Esc** → Go back
+5. Select a Pod → Press **d** → View the full describe
+6. Press **Esc** → Go back
+7. Select a Pod → Press **s** → Open a shell in the Pod
+8. Type `exit` to leave the shell
 
-### Passo 5 — Filtrar por namespace
+### Step 5 — Filter by namespace
 
 ```
-# Dentro do k9s, pressione ":" e digite:
-:pods all       # Ver Pods de todos os namespaces
-:pods spark     # Ver Pods apenas do namespace spark
+# Inside k9s, press ":" and type:
+:pods all       # View Pods from all namespaces
+:pods spark     # View Pods from the spark namespace only
 ```
 
-> 💡 **k9s vs Dashboard:** O k9s é mais rápido para interações frequentes (logs, shell, delete). O Dashboard é melhor para ter uma visão panorâmica do cluster. Use ambos!
+> 💡 **k9s vs Dashboard:** k9s is faster for frequent interactions (logs, shell, delete). The Dashboard is better for a panoramic view of the cluster. Use both!
 
 ---
 
-## 🔬 Exercício 3: Monitoramento com kubectl
+## 🔬 Exercise 3: Monitoring with kubectl
 
-Mesmo sem ferramentas visuais, o kubectl oferece excelentes capacidades de monitoramento:
+Even without visual tools, kubectl offers excellent monitoring capabilities:
 
-### Monitorar Pods em tempo real
+### Monitor Pods in real time
 
 ```bash
-# Watch mode: atualiza automaticamente
+# Watch mode: auto-refreshes
 kubectl get pods -A --watch
 
-# Em outro terminal, crie um Deployment:
+# In another terminal, create a Deployment:
 kubectl create deployment teste --image=nginx:1.27 --replicas=3
 
-# Observe os Pods sendo criados em tempo real no primeiro terminal!
-# Ctrl+C para parar
+# Watch Pods being created in real time in the first terminal!
+# Ctrl+C to stop
 ```
 
-### Ver eventos do cluster
+### View cluster events
 
 ```bash
-# Eventos recentes (ordenados por timestamp)
+# Recent events (sorted by timestamp)
 kubectl get events --sort-by='.lastTimestamp' -A
 
-# Eventos dos últimos 5 minutos
+# Events from the last 5 minutes
 kubectl get events --field-selector reason=Created -A
 ```
 
-### Verificar saúde geral
+### Check overall health
 
 ```bash
-# Tudo de tudo
+# Everything everywhere
 kubectl get all -A
 
-# Status dos nós
+# Node status
 kubectl get nodes -o wide
 
-# Componentes do cluster
+# Cluster components
 kubectl get componentstatuses 2>/dev/null || kubectl get --raw='/healthz'
 ```
 
-### Limpar o Deployment de teste
+### Clean up the test Deployment
 
 ```bash
 kubectl delete deployment teste
@@ -219,47 +219,47 @@ kubectl delete deployment teste
 
 ---
 
-## 🆚 Comparação de Ferramentas
+## 🆚 Tool Comparison
 
-| Característica | kubectl | k9s | Dashboard |
+| Feature | kubectl | k9s | Dashboard |
 |---|---|---|---|
-| **Interface** | Linha de comando | TUI (terminal) | Web (navegador) |
-| **Curva de aprendizado** | Média | Baixa | Baixa |
-| **Velocidade** | Rápido | Muito rápido | Mais lento |
-| **Visão panorâmica** | Limitada | Boa | Excelente |
-| **Interatividade** | Baixa | Alta | Alta |
-| **Reproduzível** | ✅ Sim (scripts) | ❌ Não | ❌ Não |
-| **Produção** | ✅ Padrão | ✅ Popular | ⚠️ Cuidado (segurança) |
-| **Ideal para** | Automação, CI/CD | Monitoramento, debug | Apresentações, exploração |
+| **Interface** | Command line | TUI (terminal) | Web (browser) |
+| **Learning curve** | Medium | Low | Low |
+| **Speed** | Fast | Very fast | Slower |
+| **Panoramic view** | Limited | Good | Excellent |
+| **Interactivity** | Low | High | High |
+| **Reproducible** | ✅ Yes (scripts) | ❌ No | ❌ No |
+| **Production** | ✅ Standard | ✅ Popular | ⚠️ Caution (security) |
+| **Ideal for** | Automation, CI/CD | Monitoring, debug | Presentations, exploration |
 
 ---
 
-## 🧹 Limpeza
+## 🧹 Cleanup
 
 ```bash
-# Parar o kubectl proxy (Ctrl+C)
+# Stop kubectl proxy (Ctrl+C)
 
-# Remover o Dashboard (se quiser)
+# Remove the Dashboard (if desired)
 kubectl delete -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
 kubectl delete -f labs/lab-05-dashboard-e-monitoring/manifests/dashboard.yaml
 
-# Verificar
+# Verify
 kubectl get all -n kubernetes-dashboard
 # → "No resources found" ✅
 ```
 
 ---
 
-## ✅ O que aprendemos
+## ✅ What we learned
 
-| Ferramenta | O que fizemos |
+| Tool | What we did |
 |---|---|
-| **Kubernetes Dashboard** | Instalação, token de acesso, navegação pela interface web |
-| **k9s** | Interface de terminal interativa para Pods, Deployments, logs |
-| **kubectl --watch** | Monitoramento em tempo real via linha de comando |
-| **Eventos do cluster** | Investigar o que está acontecendo no cluster |
-| **Comparação** | kubectl (automação) vs k9s (produtividade) vs Dashboard (visual) |
+| **Kubernetes Dashboard** | Installation, access token, navigating the web interface |
+| **k9s** | Interactive terminal interface for Pods, Deployments, logs |
+| **kubectl --watch** | Real-time monitoring via command line |
+| **Cluster events** | Investigate what is happening in the cluster |
+| **Comparison** | kubectl (automation) vs k9s (productivity) vs Dashboard (visual) |
 
 ---
 
-**← Voltar ao** [README.md](../../README.md)
+**← Back to** [README.md](../../README.md)

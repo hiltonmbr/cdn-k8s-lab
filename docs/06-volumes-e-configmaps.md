@@ -1,55 +1,55 @@
-# 📖 06 — Volumes, ConfigMaps e Secrets
+# 📖 06 — Volumes, ConfigMaps, and Secrets
 
-> **Objetivo:** Aprender a persistir dados, externalizar configurações e gerenciar informações sensíveis no Kubernetes. Ao final, você entenderá PVs, PVCs, ConfigMaps e Secrets — os mecanismos que separam dados e configuração do código.
+> **Objective:** Learn how to persist data, externalize configurations, and manage sensitive information in Kubernetes. By the end, you'll understand PVs, PVCs, ConfigMaps, and Secrets — the mechanisms that separate data and configuration from code.
 
 ---
 
-## 💾 O Problema: Dados Efêmeros
+## 💾 The Problem: Ephemeral Data
 
-Assim como no Docker, tudo que é escrito dentro de um contêiner K8s é **efêmero** — quando o Pod morre, os dados morrem juntos:
+Just like in Docker, everything written inside a K8s container is **ephemeral** — when the Pod dies, the data dies with it:
 
 ```bash
-# Criar Pod com PostgreSQL
-kubectl run pg --image=postgres:16 --env="POSTGRES_PASSWORD=senha"
+# Create a Pod with PostgreSQL
+kubectl run pg --image=postgres:16 --env="POSTGRES_PASSWORD=password"
 
-# Criar dados no banco...
+# Create data in the database...
 
-# Deletar o Pod (K8s recria via Deployment)
+# Delete the Pod (K8s recreates via Deployment)
 kubectl delete pod pg
 
-# Novo Pod criado automaticamente — mas sem os dados! 😱
+# New Pod created automatically — but without the data! 😱
 ```
 
-Para persistir dados, precisamos de **Volumes**.
+To persist data, we need **Volumes**.
 
 ---
 
-## 📦 Volumes no Kubernetes vs Docker
+## 📦 Volumes in Kubernetes vs Docker
 
 | Docker | Kubernetes |
 |---|---|
 | `docker run -v pgdata:/var/lib/...` | PersistentVolumeClaim (PVC) |
-| Volume gerenciado pelo Docker Engine | Volume gerenciado pelo cluster |
-| Existe no filesystem do host | Pode ser disco local, NFS, EBS, etc. |
-| Simples e direto | Desacoplado: PV → PVC → Pod |
+| Volume managed by Docker Engine | Volume managed by the cluster |
+| Exists on the host filesystem | Can be local disk, NFS, EBS, etc. |
+| Simple and direct | Decoupled: PV → PVC → Pod |
 
-### Arquitetura de Volumes no K8s
+### Volume Architecture in K8s
 
 ```
 ┌───────────────────────────────────────────────────────────┐
 │                                                           │
-│  Administrador                    Desenvolvedor           │
-│  (provisiona storage)             (solicita storage)      │
+│  Administrator                    Developer                │
+│  (provisions storage)            (requests storage)       │
 │                                                           │
 │  ┌──────────────────┐      ┌──────────────────────┐      │
 │  │ PersistentVolume │ ◄──► │ PersistentVolumeClaim│      │
 │  │      (PV)        │ bind │       (PVC)           │      │
 │  │                  │      │                       │      │
-│  │ Capacidade: 10Gi │      │ Preciso de: 5Gi      │      │
-│  │ Tipo: hostPath   │      │ Acesso: ReadWriteOnce│      │
+│  │ Capacity: 10Gi   │      │ I need: 5Gi          │      │
+│  │ Type: hostPath   │      │ Access: ReadWriteOnce│      │
 │  └──────────────────┘      └───────────┬──────────┘      │
 │                                         │                 │
-│                                    montado em             │
+│                                    mounted on             │
 │                                         │                 │
 │                                    ┌────▼─────┐          │
 │                                    │   Pod    │          │
@@ -60,11 +60,11 @@ Para persistir dados, precisamos de **Volumes**.
 
 ---
 
-## 💾 PersistentVolume (PV) e PersistentVolumeClaim (PVC)
+## 💾 PersistentVolume (PV) and PersistentVolumeClaim (PVC)
 
-### PersistentVolume (PV) — O "disco"
+### PersistentVolume (PV) — The "disk"
 
-Recurso de armazenamento **provisionado pelo administrador** (ou automaticamente via StorageClass):
+Storage resource **provisioned by the administrator** (or automatically via StorageClass):
 
 ```yaml
 # pv-local.yaml
@@ -74,16 +74,16 @@ metadata:
   name: pv-dados
 spec:
   capacity:
-    storage: 5Gi               # Capacidade total
+    storage: 5Gi               # Total capacity
   accessModes:
-    - ReadWriteOnce             # Um Pod pode ler/escrever por vez
+    - ReadWriteOnce             # One Pod can read/write at a time
   hostPath:
-    path: /data/k8s-volumes     # Caminho no nó (apenas para dev/kind)
+    path: /data/k8s-volumes     # Path on the node (dev/kind only)
 ```
 
-### PersistentVolumeClaim (PVC) — O "pedido"
+### PersistentVolumeClaim (PVC) — The "request"
 
-Solicitação de armazenamento **feita pelo desenvolvedor**:
+Storage request **made by the developer**:
 
 ```yaml
 # pvc-dados.yaml
@@ -96,10 +96,10 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 2Gi             # "Preciso de pelo menos 2 GiB"
+      storage: 2Gi             # "I need at least 2 GiB"
 ```
 
-### Usando o PVC em um Pod
+### Using the PVC in a Pod
 
 ```yaml
 # pod-com-volume.yaml
@@ -116,32 +116,32 @@ spec:
       value: "senha123"
     volumeMounts:
     - name: pg-storage
-      mountPath: /var/lib/postgresql/data  # Onde montar o volume
+      mountPath: /var/lib/postgresql/data  # Where to mount the volume
   volumes:
   - name: pg-storage
     persistentVolumeClaim:
-      claimName: dados-postgres            # Nome do PVC
+      claimName: dados-postgres            # PVC name
 ```
 
-### Modos de Acesso
+### Access Modes
 
-| Modo | Abreviação | Descrição |
+| Mode | Abbreviation | Description |
 |---|---|---|
-| **ReadWriteOnce** | RWO | Um único nó pode ler/escrever |
-| **ReadOnlyMany** | ROX | Múltiplos nós podem ler (somente leitura) |
-| **ReadWriteMany** | RWX | Múltiplos nós podem ler/escrever (NFS, Ceph) |
+| **ReadWriteOnce** | RWO | A single node can read/write |
+| **ReadOnlyMany** | ROX | Multiple nodes can read (read-only) |
+| **ReadWriteMany** | RWX | Multiple nodes can read/write (NFS, Ceph) |
 
-> 💡 **No kind:** Usamos `hostPath` como backend de armazenamento — simples e funcional para aprendizado. Em produção, o backend seria AWS EBS, GCP Persistent Disk ou Ceph.
+> 💡 **On kind:** We use `hostPath` as the storage backend — simple and functional for learning. In production, the backend would be AWS EBS, GCP Persistent Disk, or Ceph.
 
 ---
 
-## ⚡ StorageClass: Provisionamento Dinâmico
+## ⚡ StorageClass: Dynamic Provisioning
 
-Em vez de criar PVs manualmente, o **StorageClass** provisiona volumes automaticamente quando um PVC é criado:
+Instead of manually creating PVs, **StorageClass** automatically provisions volumes when a PVC is created:
 
 ```yaml
-# O kind já vem com um StorageClass padrão chamado "standard"
-# Basta criar o PVC — o PV é criado automaticamente!
+# kind already comes with a default StorageClass called "standard"
+# Just create the PVC — the PV is created automatically!
 
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -153,11 +153,11 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  # storageClassName: standard   ← Padrão no kind, pode omitir
+  # storageClassName: standard   ← Default in kind, can omit
 ```
 
 ```bash
-# Verificar StorageClasses disponíveis
+# View available StorageClasses
 kubectl get storageclass
 # → NAME                 PROVISIONER             AGE
 # → standard (default)   rancher.io/local-path   1h
@@ -165,11 +165,11 @@ kubectl get storageclass
 
 ---
 
-## 📋 ConfigMaps: Configurações Externalizadas
+## 📋 ConfigMaps: Externalized Configurations
 
-**ConfigMaps** armazenam configurações não-sensíveis fora dos contêineres. Vantagem: altere a configuração **sem reconstruir a imagem Docker**.
+**ConfigMaps** store non-sensitive configurations outside of containers. Advantage: change the configuration **without rebuilding the Docker image**.
 
-### Criando um ConfigMap
+### Creating a ConfigMap
 
 ```yaml
 # configmap-app.yaml
@@ -178,13 +178,13 @@ kind: ConfigMap
 metadata:
   name: config-api
 data:
-  # Pares chave-valor simples
+  # Simple key-value pairs
   DATABASE_HOST: "postgres"
   DATABASE_PORT: "5432"
   DATABASE_NAME: "vendas"
   LOG_LEVEL: "INFO"
 
-  # Arquivo de configuração completo
+  # Complete configuration file
   app.conf: |
     [server]
     host = 0.0.0.0
@@ -192,7 +192,7 @@ data:
     workers = 4
 ```
 
-### Usando ConfigMap como variáveis de ambiente
+### Using ConfigMap as environment variables
 
 ```yaml
 spec:
@@ -201,10 +201,10 @@ spec:
     image: minha-api:1.0
     envFrom:
     - configMapRef:
-        name: config-api        # Todas as chaves viram variáveis de ambiente
+        name: config-api        # All keys become environment variables
 ```
 
-### Usando ConfigMap como arquivo montado
+### Using ConfigMap as a mounted file
 
 ```yaml
 spec:
@@ -213,7 +213,7 @@ spec:
     image: minha-api:1.0
     volumeMounts:
     - name: config-volume
-      mountPath: /app/config      # Monta o ConfigMap como diretório
+      mountPath: /app/config      # Mounts the ConfigMap as a directory
   volumes:
   - name: config-volume
     configMap:
@@ -221,22 +221,22 @@ spec:
 ```
 
 ```bash
-# Criar ConfigMap via terminal
+# Create ConfigMap via terminal
 kubectl create configmap config-api \
   --from-literal=DATABASE_HOST=postgres \
   --from-literal=LOG_LEVEL=INFO
 
-# Criar ConfigMap a partir de um arquivo
+# Create ConfigMap from a file
 kubectl create configmap config-app --from-file=app.conf
 ```
 
 ---
 
-## 🗝️ Secrets: Dados Sensíveis
+## 🗝️ Secrets: Sensitive Data
 
-**Secrets** armazenam dados sensíveis (senhas, tokens, certificados) codificados em Base64:
+**Secrets** store sensitive data (passwords, tokens, certificates) encoded in Base64:
 
-### Criando um Secret
+### Creating a Secret
 
 ```yaml
 # secret-db.yaml
@@ -246,22 +246,22 @@ metadata:
   name: secret-postgres
 type: Opaque
 data:
-  # Valores codificados em Base64
+  # Base64-encoded values
   # echo -n "senha123" | base64  →  c2VuaGExMjM=
   POSTGRES_PASSWORD: c2VuaGExMjM=
   POSTGRES_USER: cG9zdGdyZXM=
 ```
 
-### Criando Secret via terminal (mais prático)
+### Creating a Secret via terminal (more practical)
 
 ```bash
-# O kubectl codifica em Base64 automaticamente
+# kubectl encodes in Base64 automatically
 kubectl create secret generic secret-postgres \
   --from-literal=POSTGRES_PASSWORD=senha123 \
   --from-literal=POSTGRES_USER=postgres
 ```
 
-### Usando Secret como variáveis de ambiente
+### Using Secret as environment variables
 
 ```yaml
 spec:
@@ -276,7 +276,7 @@ spec:
           key: POSTGRES_PASSWORD
 ```
 
-### Usando Secret como volume montado
+### Using Secret as a mounted volume
 
 ```yaml
 spec:
@@ -285,43 +285,43 @@ spec:
     volumeMounts:
     - name: secret-volume
       mountPath: /app/secrets
-      readOnly: true              # Boa prática: somente leitura
+      readOnly: true              # Best practice: read-only
   volumes:
   - name: secret-volume
     secret:
       secretName: secret-postgres
 ```
 
-> ⚠️ **Base64 NÃO é criptografia!** Secrets são codificados em Base64 por padrão, o que é reversível. Em produção, use soluções como **Sealed Secrets**, **Vault** ou **SOPS** para criptografia real. E **nunca versione Secrets no Git!**
+> ⚠️ **Base64 is NOT encryption!** Secrets are Base64-encoded by default, which is reversible. In production, use solutions like **Sealed Secrets**, **Vault**, or **SOPS** for real encryption. And **never version Secrets in Git!**
 
 ---
 
 ## 🆚 ConfigMap vs Secret
 
-| Aspecto | ConfigMap | Secret |
+| Aspect | ConfigMap | Secret |
 |---|---|---|
-| **Para que** | Configurações não-sensíveis | Dados sensíveis |
-| **Codificação** | Texto puro | Base64 |
-| **Exemplos** | URLs, flags, arquivos .conf | Senhas, tokens, chaves SSH |
-| **Tamanho máximo** | 1 MiB | 1 MiB |
-| **Git** | ✅ Pode versionar | ❌ Nunca versionar |
-| **Uso em Pods** | envFrom, volumeMount | env.valueFrom, volumeMount |
+| **Purpose** | Non-sensitive configurations | Sensitive data |
+| **Encoding** | Plain text | Base64 |
+| **Examples** | URLs, flags, .conf files | Passwords, tokens, SSH keys |
+| **Maximum size** | 1 MiB | 1 MiB |
+| **Git** | ✅ Can version | ❌ Never version |
+| **Usage in Pods** | envFrom, volumeMount | env.valueFrom, volumeMount |
 
 ---
 
-## 📝 Resumo
+## 📝 Summary
 
-| Conceito | Definição |
+| Concept | Definition |
 |---|---|
-| **PersistentVolume (PV)** | Recurso de armazenamento provisionado no cluster |
-| **PersistentVolumeClaim (PVC)** | Solicitação de armazenamento feita por um Pod |
-| **StorageClass** | Provisiona PVs automaticamente quando PVCs são criados |
-| **ConfigMap** | Armazena configurações não-sensíveis externalizadas |
-| **Secret** | Armazena dados sensíveis codificados em Base64 |
-| **hostPath** | Backend de volume usando diretório do nó (apenas dev) |
-| **envFrom** | Injeta ConfigMap/Secret como variáveis de ambiente |
-| **volumeMount** | Monta ConfigMap/Secret como arquivo no sistema de arquivos |
+| **PersistentVolume (PV)** | Storage resource provisioned in the cluster |
+| **PersistentVolumeClaim (PVC)** | Storage request made by a Pod |
+| **StorageClass** | Automatically provisions PVs when PVCs are created |
+| **ConfigMap** | Stores externalized non-sensitive configurations |
+| **Secret** | Stores sensitive data encoded in Base64 |
+| **hostPath** | Volume backend using a node directory (dev only) |
+| **envFrom** | Injects ConfigMap/Secret as environment variables |
+| **volumeMount** | Mounts ConfigMap/Secret as a file in the filesystem |
 
 ---
 
-**Próximo:** [07 — kubectl Cheatsheet](07-kubectl-cheatsheet.md) →
+**Next:** [07 — kubectl Cheatsheet](07-kubectl-cheatsheet.md) →

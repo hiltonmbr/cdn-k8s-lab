@@ -1,90 +1,90 @@
-# 📖 01 — Fundamentos do Kubernetes
+# 📖 01 — Kubernetes Fundamentals
 
-> **Objetivo:** Entender por que o Kubernetes existe, como ele se relaciona com o Docker, e conhecer a arquitetura do cluster antes de tocar no terminal. Ao final, você terá uma visão clara do "grande quadro" da orquestração.
-
----
-
-## 🤔 Por que Kubernetes?
-
-No Docker Lab, você aprendeu a empacotar aplicações em contêineres e orquestrá-las com Docker Compose. Isso funciona muito bem para **um único servidor**. Mas e quando a escala muda?
-
-Imagine que sua empresa processa dados de vendas de 500 lojas em tempo real. O pipeline inclui:
-- 3 instâncias de API de ingestão
-- 5 workers Spark para processamento
-- 2 réplicas de PostgreSQL
-- 1 cluster Kafka com 3 brokers
-- 1 dashboard Jupyter
-
-São **14+ contêineres** distribuídos em **vários servidores**. Agora pergunte-se:
-
-| Problema | Docker Compose resolve? |
-|---|---|
-| Um worker Spark falhou às 3h da manhã. Quem reinicia? | ❌ Não — alguém precisa intervir manualmente |
-| Pico de Black Friday — preciso de 20 workers em vez de 5 | ❌ Não — preciso parar, editar o YAML e reiniciar |
-| O servidor #2 pegou fogo. Os contêineres dele precisam migrar | ❌ Não — Compose gerencia apenas um host |
-| Quero atualizar a API sem interromper os usuários | ❌ Difícil — `docker compose up --build` causa downtime |
-| Preciso distribuir contêineres entre 10 servidores | ❌ Compose não conhece múltiplos hosts |
-
-### A Resposta: Orquestração
-
-O **Kubernetes (K8s)** é um sistema de orquestração de contêineres que resolve todos esses problemas automaticamente:
-
-| Capacidade | Como o K8s resolve |
-|---|---|
-| **Auto-healing** | Pod falhou? K8s detecta e cria um novo automaticamente |
-| **Scaling** | `kubectl scale --replicas=20` — ou escala automática com HPA |
-| **Distribuição** | O Scheduler decide em qual nó cada Pod roda, otimizando recursos |
-| **Rolling updates** | Atualiza versões gradualmente, sem downtime |
-| **Service Discovery** | Pods se encontram por nome via DNS interno |
-
-> 💡 **Analogia:** Se o Docker Compose é o **maestro de uma banda** (gerencia poucos músicos em um palco), o Kubernetes é o **maestro de uma orquestra sinfônica** (gerencia centenas de músicos em múltiplos palcos, substituindo automaticamente quem desafina).
+> **Objective:** Understand why Kubernetes exists, how it relates to Docker, and learn the cluster architecture before touching the terminal. By the end, you'll have a clear view of the "big picture" of orchestration.
 
 ---
 
-## 🏛️ A Origem do Kubernetes
+## 🤔 Why Kubernetes?
 
-O Kubernetes nasceu da experiência do Google com seu sistema interno chamado **Borg**, que orquestrava milhões de contêineres nos datacenters do Google desde 2003.
+In the Docker Lab, you learned to package applications into containers and orchestrate them with Docker Compose. This works very well for **a single server**. But what happens when the scale changes?
+
+Imagine your company processes sales data from 500 stores in real time. The pipeline includes:
+- 3 API ingestion instances
+- 5 Spark workers for processing
+- 2 PostgreSQL replicas
+- 1 Kafka cluster with 3 brokers
+- 1 Jupyter dashboard
+
+That's **14+ containers** distributed across **multiple servers**. Now ask yourself:
+
+| Problem | Docker Compose solve it? |
+|---|---|
+| A Spark worker failed at 3 AM. Who restarts it? | ❌ No — someone needs to intervene manually |
+| Black Friday peak — I need 20 workers instead of 5 | ❌ No — I need to stop, edit the YAML, and restart |
+| Server #2 caught fire. Its containers need to migrate | ❌ No — Compose manages only one host |
+| I want to update the API without interrupting users | ❌ Hard — `docker compose up --build` causes downtime |
+| I need to distribute containers across 10 servers | ❌ Compose doesn't know about multiple hosts |
+
+### The Answer: Orchestration
+
+**Kubernetes (K8s)** is a container orchestration system that solves all these problems automatically:
+
+| Capability | How K8s solves it |
+|---|---|
+| **Auto-healing** | Pod failed? K8s detects it and creates a new one automatically |
+| **Scaling** | `kubectl scale --replicas=20` — or auto-scaling with HPA |
+| **Distribution** | The Scheduler decides which node each Pod runs on, optimizing resources |
+| **Rolling updates** | Updates versions gradually, without downtime |
+| **Service Discovery** | Pods find each other by name via internal DNS |
+
+> 💡 **Analogy:** If Docker Compose is the **band conductor** (manages a few musicians on one stage), Kubernetes is the **symphony orchestra conductor** (manages hundreds of musicians on multiple stages, automatically replacing anyone who goes out of tune).
+
+---
+
+## 🏛️ The Origin of Kubernetes
+
+Kubernetes was born from Google's experience with its internal system called **Borg**, which had been orchestrating millions of containers in Google's datacenters since 2003.
 
 **Timeline:**
 ```
-2003 ─── Google cria o Borg (orquestração interna)
+2003 ─── Google creates Borg (internal orchestration)
   │
-2013 ─── Google cria o Omega (evolução do Borg)
+2013 ─── Google creates Omega (evolution of Borg)
   │
-2014 ─── Google doa o Kubernetes à comunidade open-source
+2014 ─── Google donates Kubernetes to the open-source community
   │
-2015 ─── CNCF (Cloud Native Computing Foundation) assume a governança
+2015 ─── CNCF (Cloud Native Computing Foundation) takes over governance
   │
-2024 ─── K8s é o padrão da indústria:
+2024 ─── K8s is the industry standard:
          - AWS (EKS), Google Cloud (GKE), Azure (AKS)
-         - 96% das empresas usam ou avaliam K8s (CNCF Survey)
+         - 96% of companies use or evaluate K8s (CNCF Survey)
 ```
 
-O nome "Kubernetes" vem do grego **κυβερνήτης** (kubernétēs) — **timoneiro**, aquele que pilota um navio. A abreviação **K8s** conta as 8 letras entre o "K" e o "s".
+The name "Kubernetes" comes from the Greek **κυβερνήτης** (kubernétēs) — **helmsman**, the one who pilots a ship. The abbreviation **K8s** counts the 8 letters between the "K" and the "s".
 
 ---
 
-## 📐 Arquitetura do Kubernetes
+## 📐 Kubernetes Architecture
 
-Um cluster Kubernetes é dividido em dois tipos de nós:
+A Kubernetes cluster is divided into two types of nodes:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                        CLUSTER KUBERNETES                               │
+│                        KUBERNETES CLUSTER                               │
 │                                                                         │
 │  ┌──────────────────────────────────────┐                               │
 │  │        🧠 CONTROL PLANE              │                               │
-│  │     (Nó Mestre — o cérebro)          │                               │
+│  │     (Master Node — the brain)        │                               │
 │  │                                      │                               │
 │  │  ┌──────────┐  ┌───────────────┐     │                               │
-│  │  │API Server│  │   Scheduler   │     │  ← Decide onde rodar cada Pod │
+│  │  │API Server│  │   Scheduler   │     │  ← Decides where each Pod runs│
 │  │  │ (kube-   │  │               │     │                               │
 │  │  │ apiserver│  └───────────────┘     │                               │
 │  │  └──────────┘  ┌───────────────┐     │                               │
-│  │  ┌──────────┐  │  Controller   │     │  ← Mantém o estado desejado   │
+│  │  ┌──────────┐  │  Controller   │     │  ← Maintains desired state    │
 │  │  │  etcd    │  │   Manager     │     │                               │
-│  │  │(banco de │  └───────────────┘     │                               │
-│  │  │ dados)   │                        │                               │
+│  │  │(distributed│ └───────────────┘     │                               │
+│  │  │  store)  │                        │                               │
 │  │  └──────────┘                        │                               │
 │  └──────────────────────────────────────┘                               │
 │                          │                                              │
@@ -95,74 +95,74 @@ Um cluster Kubernetes é dividido em dois tipos de nós:
 │  │ 🏗️ WORKER #1 │ │ 🏗️ WORKER #2 │ │ 🏗️ WORKER #3 │                     │
 │  │              │ │              │ │              │                     │
 │  │ ┌──────────┐ │ │ ┌──────────┐ │ │ ┌──────────┐ │                     │
-│  │ │ kubelet  │ │ │ │ kubelet  │ │ │ │ kubelet  │ │  ← Agente no nó    │
+│  │ │ kubelet  │ │ │ │ kubelet  │ │ │ │ kubelet  │ │  ← Node agent       │
 │  │ └──────────┘ │ │ └──────────┘ │ │ └──────────┘ │                     │
 │  │ ┌──────────┐ │ │ ┌──────────┐ │ │ ┌──────────┐ │                     │
-│  │ │kube-proxy│ │ │ │kube-proxy│ │ │ │kube-proxy│ │  ← Rede do nó      │
+│  │ │kube-proxy│ │ │ │kube-proxy│ │ │ │kube-proxy│ │  ← Node networking  │
 │  │ └──────────┘ │ │ └──────────┘ │ │ └──────────┘ │                     │
 │  │ ┌──────────┐ │ │ ┌──────────┐ │ │ ┌──────────┐ │                     │
 │  │ │container │ │ │ │container │ │ │ │container │ │  ← containerd       │
 │  │ │ runtime  │ │ │ │ runtime  │ │ │ │ runtime  │ │                     │
 │  │ └──────────┘ │ │ └──────────┘ │ │ └──────────┘ │                     │
 │  │              │ │              │ │              │                     │
-│  │ [Pod][Pod]   │ │ [Pod][Pod]   │ │ [Pod]        │  ← Suas aplicações  │
+│  │ [Pod][Pod]   │ │ [Pod][Pod]   │ │ [Pod]        │  ← Your applications│
 │  └──────────────┘ └──────────────┘ └──────────────┘                     │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 🧠 Control Plane (Nó Mestre)
+### 🧠 Control Plane (Master Node)
 
-O Control Plane é o "cérebro" do cluster. Ele nunca executa suas aplicações — apenas **toma decisões** sobre onde e como executá-las.
+The Control Plane is the "brain" of the cluster. It never runs your applications — it only **makes decisions** about where and how to run them.
 
-| Componente | Função | Analogia |
+| Component | Function | Analogy |
 |---|---|---|
-| **API Server** | Ponto central de comunicação. Todo comando `kubectl` passa por ele. | Recepcionista do hotel — todo pedido passa por ela |
-| **etcd** | Banco de dados distribuído que armazena **todo** o estado do cluster. | Livro de registros do hotel — quem está em qual quarto |
-| **Scheduler** | Decide em qual Worker Node cada novo Pod será executado. | Recepcionista que atribui quartos aos hóspedes |
-| **Controller Manager** | Monitora o estado atual e o compara com o desejado. Corrige desvios. | Gerente que verifica se todas as regras estão sendo seguidas |
+| **API Server** | Central communication point. Every `kubectl` command goes through it. | Hotel receptionist — every request goes through her |
+| **etcd** | Distributed database that stores **all** cluster state. | Hotel register book — who is in which room |
+| **Scheduler** | Decides which Worker Node each new Pod will run on. | Receptionist who assigns rooms to guests |
+| **Controller Manager** | Monitors current state and compares it with desired state. Corrects deviations. | Manager who checks that all rules are being followed |
 
-### 🏗️ Worker Nodes (Nós de Trabalho)
+### 🏗️ Worker Nodes
 
-Os Workers são as máquinas que **realmente executam** suas aplicações (Pods).
+Workers are the machines that **actually run** your applications (Pods).
 
-| Componente | Função | Analogia |
+| Component | Function | Analogy |
 |---|---|---|
-| **kubelet** | Agente que roda em cada Worker. Recebe instruções do API Server e gerencia os Pods locais. | Gerente de andar do hotel — cuida dos quartos no seu andar |
-| **kube-proxy** | Gerencia as regras de rede no nó. Roteia tráfego para os Pods corretos. | Porteiro que direciona visitantes ao quarto certo |
-| **Container Runtime** | Motor de contêineres (containerd, CRI-O). Cria e executa os contêineres reais. | Infraestrutura do hotel — encanamento, eletricidade |
+| **kubelet** | Agent that runs on each Worker. Receives instructions from the API Server and manages local Pods. | Floor manager — takes care of rooms on their floor |
+| **kube-proxy** | Manages networking rules on the node. Routes traffic to the correct Pods. | Doorman who directs visitors to the right room |
+| **Container Runtime** | Container engine (containerd, CRI-O). Creates and runs the actual containers. | Hotel infrastructure — plumbing, electricity |
 
 ---
 
-## 📝 A Filosofia Declarativa
+## 📝 The Declarative Philosophy
 
-O Kubernetes usa uma abordagem **declarativa**: você descreve o **estado desejado** em um arquivo YAML, e o K8s trabalha continuamente para alcançar e manter esse estado.
+Kubernetes uses a **declarative** approach: you describe the **desired state** in a YAML file, and K8s continuously works to achieve and maintain that state.
 
-### Imperativo vs Declarativo
+### Imperative vs Declarative
 
 ```
-🔧 IMPERATIVO (Docker / comandos manuais):
-   "Execute 3 contêineres Nginx"
-   "Se um morrer, crie outro"
-   "Se precisar de mais, crie manualmente"
-   → Você diz COMO fazer, passo a passo
+🔧 IMPERATIVE (Docker / manual commands):
+   "Run 3 Nginx containers"
+   "If one dies, create another"
+   "If you need more, create manually"
+   → You tell HOW to do it, step by step
 
-📝 DECLARATIVO (Kubernetes):
-   "Eu quero 3 réplicas de Nginx rodando"
-   → K8s garante que SEMPRE haverá 3
-   → Se uma morrer, K8s cria automaticamente
-   → Você diz O QUE quer, K8s decide como fazer
+📝 DECLARATIVE (Kubernetes):
+   "I want 3 Nginx replicas running"
+   → K8s guarantees there will ALWAYS be 3
+   → If one dies, K8s creates one automatically
+   → You tell WHAT you want, K8s decides how to do it
 ```
 
-### Exemplo Prático
+### Practical Example
 
 ```yaml
-# deployment-nginx.yaml — "Eu quero 3 réplicas de Nginx"
+# deployment-nginx.yaml — "I want 3 replicas of Nginx"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: meu-nginx
 spec:
-  replicas: 3          # ← Estado desejado: 3 Pods
+  replicas: 3          # ← Desired state: 3 Pods
   selector:
     matchLabels:
       app: nginx
@@ -178,68 +178,68 @@ spec:
         - containerPort: 80
 ```
 
-Quando você aplica esse YAML:
+When you apply this YAML:
 
 ```bash
 kubectl apply -f deployment-nginx.yaml
 ```
 
-O K8s entra em um **loop de reconciliação** contínuo:
+K8s enters a continuous **reconciliation loop**:
 
 ```
      ┌────────────────────────────────────────┐
-     │        Loop de Reconciliação K8s       │
+     │       K8s Reconciliation Loop          │
      │                                        │
-     │   Estado Desejado: 3 Pods Nginx        │
-     │   Estado Atual:    ? Pods rodando      │
+     │   Desired State: 3 Nginx Pods          │
+     │   Current State: ? Pods running        │
      │                                        │
      │   ┌──────────────────────────────┐     │
-     │   │ Atual < Desejado?           │     │
-     │   │   SIM → Criar Pods faltantes│     │
-     │   │   NÃO → Tudo OK, monitorar  │     │
+     │   │ Current < Desired?          │     │
+     │   │   YES → Create missing Pods  │     │
+     │   │   NO → All good, keep monitoring │
      │   │                              │     │
-     │   │ Atual > Desejado?           │     │
-     │   │   SIM → Remover excesso     │     │
+     │   │ Current > Desired?          │     │
+     │   │   YES → Remove excess       │     │
      │   └──────────────────────────────┘     │
      │                                        │
-     │   🔄 Repete a cada poucos segundos     │
+     │   🔄 Repeats every few seconds         │
      └────────────────────────────────────────┘
 ```
 
-Se você deletar um Pod manualmente, o K8s percebe que o estado atual (2 Pods) difere do desejado (3 Pods) e cria um novo automaticamente. Isso é **auto-healing**.
+If you delete a Pod manually, K8s notices that the current state (2 Pods) differs from the desired state (3 Pods) and creates a new one automatically. This is **auto-healing**.
 
 ---
 
-## 🌐 O Ecossistema CNCF
+## 🌐 The CNCF Ecosystem
 
-O Kubernetes é o projeto central de um ecossistema chamado **Cloud Native Computing Foundation (CNCF)**, que inclui centenas de ferramentas complementares:
+Kubernetes is the central project of an ecosystem called the **Cloud Native Computing Foundation (CNCF)**, which includes hundreds of complementary tools:
 
-| Categoria | Ferramenta | Para que serve |
+| Category | Tool | What it's for |
 |---|---|---|
-| **Orquestração** | Kubernetes | Gerenciar contêineres em escala |
-| **Service Mesh** | Istio, Linkerd | Comunicação segura entre serviços |
-| **Monitoramento** | Prometheus + Grafana | Métricas e dashboards |
-| **Logging** | Fluentd, Loki | Coleta centralizada de logs |
-| **CI/CD** | Argo CD, Flux | Deploy contínuo via GitOps |
-| **Armazenamento** | Rook (Ceph) | Storage distribuído |
-| **Segurança** | Falco, OPA | Detecção de ameaças e políticas |
+| **Orchestration** | Kubernetes | Managing containers at scale |
+| **Service Mesh** | Istio, Linkerd | Secure communication between services |
+| **Monitoring** | Prometheus + Grafana | Metrics and dashboards |
+| **Logging** | Fluentd, Loki | Centralized log collection |
+| **CI/CD** | Argo CD, Flux | Continuous deployment via GitOps |
+| **Storage** | Rook (Ceph) | Distributed storage |
+| **Security** | Falco, OPA | Threat detection and policies |
 
-> 💡 **Para o estudante de dados:** As ferramentas que você já conhece — Spark, Kafka, Airflow, Jupyter — todas têm integrações nativas com Kubernetes. Aprender K8s é investir no futuro da sua carreira em dados.
+> 💡 **For data students:** The tools you already know — Spark, Kafka, Airflow, Jupyter — all have native integrations with Kubernetes. Learning K8s is investing in the future of your data career.
 
 ---
 
-## 📝 Resumo
+## 📝 Summary
 
-| Conceito | Definição |
+| Concept | Definition |
 |---|---|
-| **Kubernetes (K8s)** | Sistema de orquestração de contêineres — gerencia, escala e auto-recupera aplicações |
-| **Cluster** | Conjunto de máquinas (nós) gerenciadas pelo K8s |
-| **Control Plane** | Cérebro do cluster — API Server, etcd, Scheduler, Controller Manager |
-| **Worker Node** | Máquina que executa Pods — kubelet, kube-proxy, container runtime |
-| **Filosofia Declarativa** | Você descreve o estado desejado em YAML; K8s mantém automaticamente |
-| **Auto-healing** | K8s recria Pods que falham, sem intervenção humana |
-| **CNCF** | Fundação que governa o K8s e seu ecossistema de ferramentas |
+| **Kubernetes (K8s)** | Container orchestration system — manages, scales, and auto-heals applications |
+| **Cluster** | Set of machines (nodes) managed by K8s |
+| **Control Plane** | Brain of the cluster — API Server, etcd, Scheduler, Controller Manager |
+| **Worker Node** | Machine that runs Pods — kubelet, kube-proxy, container runtime |
+| **Declarative Philosophy** | You describe the desired state in YAML; K8s maintains it automatically |
+| **Auto-healing** | K8s recreates Pods that fail, without human intervention |
+| **CNCF** | Foundation that governs K8s and its ecosystem of tools |
 
 ---
 
-**Próximo:** [02 — Instalação (kind, kubectl e ferramentas)](02-instalacao-kind.md) →
+**Next:** [02 — Installation (kind, kubectl, and tools)](02-instalacao-kind.md) →
