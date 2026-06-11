@@ -247,12 +247,12 @@ The content is organized into **conceptual documentation** + **practical labs**,
 
 | # | Module | Topics | Link |
 |---|---|---|---|
-| 01 | **K8s Fundamentals** | Why orchestrate, architecture, Control Plane, Workers, declarative philosophy | [📖 Read](docs/01-fundamentos-k8s.md) |
-| 02 | **Installation (kind)** | Installing kind, kubectl, k9s, creating clusters, kind-config | [📖 Read](docs/02-instalacao-kind.md) |
-| 03 | **Pods and Containers** | YAML anatomy, lifecycle, Labels, Selectors, resource limits | [📖 Read](docs/03-pods-e-containers.md) |
-| 04 | **Deployments** | ReplicaSets, rolling updates, rollback, scaling, HPA | [📖 Read](docs/04-deployments-e-replicasets.md) |
-| 05 | **Services and Networking** | ClusterIP, NodePort, LoadBalancer, internal DNS, Ingress | [📖 Read](docs/05-services-e-networking.md) |
-| 06 | **Volumes and Config** | PV, PVC, ConfigMaps, Secrets, StorageClass | [📖 Read](docs/06-volumes-e-configmaps.md) |
+| 01 | **K8s Fundamentals** | Why orchestrate, architecture, Control Plane, Workers, declarative philosophy | [📖 Read](docs/01-kubernetes-fundamentals.md) |
+| 02 | **Installation (kind)** | Installing kind, kubectl, k9s, creating clusters, kind-config | [📖 Read](docs/02-installing-kind.md) |
+| 03 | **Pods and Containers** | YAML anatomy, lifecycle, Labels, Selectors, resource limits | [📖 Read](docs/03-pods-and-containers.md) |
+| 04 | **Deployments** | ReplicaSets, rolling updates, rollback, scaling, HPA | [📖 Read](docs/04-deployments-and-replicasets.md) |
+| 05 | **Services and Networking** | ClusterIP, NodePort, LoadBalancer, internal DNS, Ingress | [📖 Read](docs/05-services-and-networking.md) |
+| 06 | **Volumes and Config** | PV, PVC, ConfigMaps, Secrets, StorageClass | [📖 Read](docs/06-volumes-and-configmaps.md) |
 | 07 | **kubectl Cheatsheet** | Quick reference for all essential commands | [📖 Read](docs/07-kubectl-cheatsheet.md) |
 
 ### 🧪 Practical Labs
@@ -261,9 +261,9 @@ The content is organized into **conceptual documentation** + **practical labs**,
 |---|---|---|---|---|---|
 | 01 | **Hello K8s** | First cluster | kind, kubectl, Pods, port-forward | 30 min | [🧪 Go](labs/lab-01-hello-k8s/README.md) |
 | 02 | **Deployments** | Scaling and rollouts | Replicas, rolling update, rollback, Services | 30 min | [🧪 Go](labs/lab-02-deployments/README.md) |
-| 03 | **Fullstack App** | K8s + External DB | API on K8s + External PostgreSQL (Docker) + pgAdmin | 40 min | [🧪 Go](labs/lab-03-app-fullstack/README.md) |
+| 03 | **Fullstack App** | K8s + External DB | API on K8s + External PostgreSQL (Docker) + pgAdmin | 40 min | [🧪 Go](labs/lab-03-fullstack-app/README.md) |
 | 04 | **Spark on K8s** | Big Data on the cluster | Spark Master + Workers, WordCount job, scalability | 35 min | [🧪 Go](labs/lab-04-spark-on-k8s/README.md) |
-| 05 | **Dashboard** | Visual monitoring | Kubernetes Dashboard, k9s, cluster metrics | 25 min | [🧪 Go](labs/lab-05-dashboard-e-monitoring/README.md) |
+| 05 | **Dashboard** | Visual monitoring | Kubernetes Dashboard, k9s, cluster metrics | 25 min | [🧪 Go](labs/lab-05-dashboard-and-monitoring/README.md) |
 
 ### 📍 Suggested Progression
 
@@ -310,19 +310,19 @@ graph TB
     ROOT --> GI[".gitignore"]
     ROOT --> README["README.md"]
 
-    DOCS --> D01["01-fundamentos-k8s.md<br/>What is K8s, architecture"]
-    DOCS --> D02["02-instalacao-kind.md<br/>Installing kind and tools"]
-    DOCS --> D03["03-pods-e-containers.md<br/>Pods, Labels, lifecycle"]
-    DOCS --> D04["04-deployments-e-replicasets.md<br/>Deployments, scaling"]
-    DOCS --> D05["05-services-e-networking.md<br/>Services, DNS, Ingress"]
-    DOCS --> D06["06-volumes-e-configmaps.md<br/>PV/PVC, ConfigMaps, Secrets"]
+    DOCS --> D01["01-kubernetes-fundamentals.md<br/>What is K8s, architecture"]
+    DOCS --> D02["02-installing-kind.md<br/>Installing kind and tools"]
+    DOCS --> D03["03-pods-and-containers.md<br/>Pods, Labels, lifecycle"]
+    DOCS --> D04["04-deployments-and-replicasets.md<br/>Deployments, scaling"]
+    DOCS --> D05["05-services-and-networking.md<br/>Services, DNS, Ingress"]
+    DOCS --> D06["06-volumes-and-configmaps.md<br/>PV/PVC, ConfigMaps, Secrets"]
     DOCS --> D07["07-kubectl-cheatsheet.md<br/>Quick command reference"]
 
     LABS --> L01["lab-01-hello-k8s/<br/>First cluster + Pod"]
     LABS --> L02["lab-02-deployments/<br/>Deployments, scaling"]
-    LABS --> L03["lab-03-app-fullstack/<br/>K8s + External DB"]
+    LABS --> L03["lab-03-fullstack-app/<br/>K8s + External DB"]
     LABS --> L04["lab-04-spark-on-k8s/<br/>Spark on K8s"]
-    LABS --> L05["lab-05-dashboard-e-monitoring/<br/>Dashboard & k9s"]
+    LABS --> L05["lab-05-dashboard-and-monitoring/<br/>Dashboard & k9s"]
 
     L02 --> L02M["manifests/"]
     L03 --> L03A["app/"]

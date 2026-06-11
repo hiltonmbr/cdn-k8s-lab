@@ -86,7 +86,7 @@ docker exec -it postgres-externo psql -U postgres -d escola -c "SELECT 1"
 ### Step 1 — Build the API image
 
 ```bash
-cd labs/lab-03-app-fullstack/app
+cd labs/lab-03-fullstack-app/app
 
 docker build -t api-escola:1.0 .
 kind load docker-image api-escola:1.0 --name k8s-lab
@@ -97,7 +97,7 @@ cd ../../..
 ### Step 2 — Create the Namespace
 
 ```bash
-kubectl apply -f labs/lab-03-app-fullstack/manifests/namespace.yaml
+kubectl apply -f labs/lab-03-fullstack-app/manifests/namespace.yaml
 # → namespace/fullstack created
 
 # Verify
@@ -111,7 +111,7 @@ kubectl get namespaces
 ### Step 3 — Create the Secret with credentials
 
 ```bash
-kubectl apply -f labs/lab-03-app-fullstack/manifests/postgres-secret.yaml
+kubectl apply -f labs/lab-03-fullstack-app/manifests/postgres-secret.yaml
 # → secret/postgres-secret created
 
 # Verify (content is Base64, not plain text)
@@ -121,7 +121,7 @@ kubectl get secret postgres-secret -n fullstack -o yaml
 ### Step 4 — Create the ExternalName Service
 
 ```bash
-kubectl apply -f labs/lab-03-app-fullstack/manifests/postgres-external-service.yaml
+kubectl apply -f labs/lab-03-fullstack-app/manifests/postgres-external-service.yaml
 # → service/postgres created
 
 # Verify
@@ -139,8 +139,8 @@ kubectl get svc -n fullstack
 ### Step 1 — Apply the API Deployment and Service
 
 ```bash
-kubectl apply -f labs/lab-03-app-fullstack/manifests/api-deployment.yaml
-kubectl apply -f labs/lab-03-app-fullstack/manifests/api-service.yaml
+kubectl apply -f labs/lab-03-fullstack-app/manifests/api-deployment.yaml
+kubectl apply -f labs/lab-03-fullstack-app/manifests/api-service.yaml
 ```
 
 ### Step 2 — Verify the Pods
@@ -193,7 +193,7 @@ curl http://localhost:30002/alunos | python3 -m json.tool
 ### Step 1 — Apply the pgAdmin Deployment
 
 ```bash
-kubectl apply -f labs/lab-03-app-fullstack/manifests/pgadmin-deployment.yaml
+kubectl apply -f labs/lab-03-fullstack-app/manifests/pgadmin-deployment.yaml
 ```
 
 ### Step 2 — Wait (pgAdmin is heavy, may take a while)

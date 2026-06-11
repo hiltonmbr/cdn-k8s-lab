@@ -346,4 +346,4 @@ docker rmi api-vendas:1.0 api-vendas:2.0
 
 ---
 
-**Next:** [Lab 03 — Fullstack App (K8s + External DB)](../lab-03-app-fullstack/README.md) →
+**Next:** [Lab 03 — Fullstack App (K8s + External DB)](../lab-03-fullstack-app/README.md) →

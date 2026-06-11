@@ -267,4 +267,4 @@ kubectl autoscale deployment api-vendas \
 
 ---
 
-**Next:** [05 — Services and Networking](05-services-e-networking.md) →
+**Next:** [05 — Services and Networking](05-services-and-networking.md) →

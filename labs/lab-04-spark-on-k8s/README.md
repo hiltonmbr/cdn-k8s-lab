@@ -302,4 +302,4 @@ kubectl get all -n spark
 
 ---
 
-**Next:** [Lab 05 — Dashboard and Monitoring](../lab-05-dashboard-e-monitoring/README.md) →
+**Next:** [Lab 05 — Dashboard and Monitoring](../lab-05-dashboard-and-monitoring/README.md) →

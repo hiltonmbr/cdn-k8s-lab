@@ -82,7 +82,7 @@ lab-03:
 		exit 1; \
 	fi
 	@echo "⏳ Creating namespace and applying manifests..."
-	kubectl apply -f labs/lab-03-app-fullstack/manifests/
+	kubectl apply -f labs/lab-03-fullstack-app/manifests/
 	@echo "✅ Lab 03 applied! Access API at http://localhost:30002"
 
 lab-04:
@@ -102,7 +102,7 @@ lab-05:
 		exit 1; \
 	fi
 	@echo "⏳ Applying Dashboard manifests..."
-	kubectl apply -f labs/lab-05-dashboard-e-monitoring/manifests/
+	kubectl apply -f labs/lab-05-dashboard-and-monitoring/manifests/
 	@echo "✅ Lab 05 applied! Run 'kubectl proxy' to access the dashboard."
 
 clean:
@@ -122,7 +122,7 @@ docker-build:
 	@echo "  Building api-sales:1.0..."
 	@docker build -t api-sales:1.0 labs/lab-02-deployments/app/ > /dev/null && echo "    ✅ api-sales:1.0 built"
 	@echo "  Building api-school:1.0..."
-	@docker build -t api-school:1.0 labs/lab-03-app-fullstack/app/ > /dev/null && echo "    ✅ api-school:1.0 built"
+	@docker build -t api-school:1.0 labs/lab-03-fullstack-app/app/ > /dev/null && echo "    ✅ api-school:1.0 built"
 	@echo "🐳 All images built!"
 
 docker-load:

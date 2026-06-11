@@ -268,4 +268,4 @@ kubectl port-forward deployment/api-vendas 8080:8000
 
 ---
 
-**Next:** [06 — Volumes and ConfigMaps](06-volumes-e-configmaps.md) →
+**Next:** [06 — Volumes and ConfigMaps](06-volumes-and-configmaps.md) →

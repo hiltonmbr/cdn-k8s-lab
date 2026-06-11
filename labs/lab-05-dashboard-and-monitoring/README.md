@@ -52,7 +52,7 @@ kubectl get pods -n kubernetes-dashboard
 ### Step 3 — Create admin user for the Dashboard
 
 ```bash
-kubectl apply -f labs/lab-05-dashboard-e-monitoring/manifests/dashboard.yaml
+kubectl apply -f labs/lab-05-dashboard-and-monitoring/manifests/dashboard.yaml
 # → serviceaccount/admin-user created
 # → clusterrolebinding.rbac.authorization.k8s.io/admin-user created
 ```
@@ -241,7 +241,7 @@ kubectl delete deployment teste
 
 # Remove the Dashboard (if desired)
 kubectl delete -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
-kubectl delete -f labs/lab-05-dashboard-e-monitoring/manifests/dashboard.yaml
+kubectl delete -f labs/lab-05-dashboard-and-monitoring/manifests/dashboard.yaml
 
 # Verify
 kubectl get all -n kubernetes-dashboard

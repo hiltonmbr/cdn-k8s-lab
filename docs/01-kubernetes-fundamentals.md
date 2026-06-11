@@ -242,4 +242,4 @@ Kubernetes is the central project of an ecosystem called the **Cloud Native Comp
 
 ---
 
-**Next:** [02 — Installation (kind, kubectl, and tools)](02-instalacao-kind.md) →
+**Next:** [02 — Installation (kind, kubectl, and tools)](02-installing-kind.md) →

@@ -355,4 +355,4 @@ kubectl run meu-nginx --image=nginx:1.27 --port=80 \
 
 ---
 
-**Next:** [04 — Deployments and ReplicaSets](04-deployments-e-replicasets.md) →
+**Next:** [04 — Deployments and ReplicaSets](04-deployments-and-replicasets.md) →

@@ -373,4 +373,4 @@ If all steps passed, your environment is ready! 🎉
 
 ---
 
-**Next:** [03 — Pods and Containers](03-pods-e-containers.md) →
+**Next:** [03 — Pods and Containers](03-pods-and-containers.md) →
