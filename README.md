@@ -110,6 +110,57 @@ kind delete cluster --name my-first-cluster
 
 ---
 
+## 🏗️ Using the Makefile
+
+This repository includes a `Makefile` to automate common tasks. Run `make` or `make help` to see all available targets:
+
+```bash
+make help
+# 🌟 Welcome to the K8s Lab Makefile!
+#
+# Available targets:
+#   help            📖 Show this help message
+#   setup           🔧 Install dependencies and create cluster
+#   cluster-create  🏗️  Create kind cluster
+#   cluster-delete  🗑️  Delete kind cluster
+#   cluster-info    ℹ️  Show cluster info
+#   lab-01          🧪 Run Lab 01 — Hello K8s
+#   lab-02          🧪 Run Lab 02 — Deployments
+#   lab-03          🧪 Run Lab 03 — Fullstack App
+#   lab-04          🧪 Run Lab 04 — Spark on K8s
+#   lab-05          🧪 Run Lab 05 — Dashboard & Monitoring
+#   clean           🧹 Clean all lab resources
+#   docker-build    🐳 Build all Docker images
+#   docker-load     📦 Load Docker images into kind
+#   lint            ✅ Check YAML syntax
+#   all             🚀 Setup + build + load + cluster
+```
+
+### Common workflows
+
+| Workflow | Command | Description |
+|---|---|---|
+| **Full setup** | `make all` | Create cluster, build images, load them into kind |
+| **Quick start** | `make cluster-create` | Create the kind cluster from `kind-config.yaml` |
+| **Build images** | `make docker-build` | Build `api-sales:1.0` and `api-school:1.0` |
+| **Load images** | `make docker-load` | Load images from your host into the kind cluster |
+| **Run a lab** | `make lab-02` | Apply the manifests for a specific lab |
+| **Check cluster** | `make cluster-info` | Show cluster info and node status |
+| **Validate YAML** | `make lint` | Check all YAML manifests for syntax errors |
+| **Clean up** | `make clean` | Remove all lab resources (namespaces, deployments, services) |
+| **Delete cluster** | `make cluster-delete` | Destroy the entire kind cluster |
+
+### Custom cluster name
+
+Override the default cluster name (`k8s-lab`) by setting the `CLUSTER_NAME` variable:
+
+```bash
+make cluster-create CLUSTER_NAME=my-cluster
+make cluster-delete CLUSTER_NAME=my-cluster
+```
+
+---
+
 ## ⚙️ Prerequisites
 
 | Requirement | Details |
